@@ -81,9 +81,7 @@
         <el-form-item label="数据操作">
           <div class="setting-item">
             <el-space wrap size="default">
-              <el-button @click="handleImportData" :loading="importing" :icon="Upload" size="default">
-                导入数据
-              </el-button>
+
               <el-popconfirm
                 title="确定要清空所有数据吗？此操作无法恢复。"
                 @confirm="handleClearData"
@@ -97,14 +95,11 @@
               </el-popconfirm>
             </el-space>
             <div class="setting-help">
-              导入JSON格式的课程数据，或清空当前所有课程数据
+              清空当前所有课程数据
             </div>
           </div>
         </el-form-item>
       </div>
-
-
-
     </el-form>
 
     <template #footer>
@@ -117,27 +112,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useScheduleStore } from '../stores/schedule'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Setting, Sunny, Moon, Calendar, FolderOpened, Upload, Delete } from '@element-plus/icons-vue'
-import { storageService } from '../services/storage.js'
+import { ElMessage } from 'element-plus'
+import { Setting, Sunny, Moon, Calendar, FolderOpened, Delete } from '@element-plus/icons-vue'
 
 const scheduleStore = useScheduleStore()
 
 const showDialog = ref(false)
-const importing = ref(false)
+
 const clearing = ref(false)
 
 const formData = reactive({
   theme: 'light',
   autoSave: true,
   firstWeekStart: ''
-})
-
-const lastModifiedText = computed(() => {
-  if (!scheduleStore.metadata.lastModified) return '未知'
-  return new Date(scheduleStore.metadata.lastModified).toLocaleString('zh-CN')
 })
 
 watch(
@@ -192,45 +181,6 @@ const handleSave = async () => {
 
 const handleCancel = () => {
   showDialog.value = false
-}
-
-
-
-const handleImportData = () => {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.json'
-  
-  input.onchange = async (event) => {
-    importing.value = true
-    try {
-      const file = event.target.files[0]
-      if (!file) {
-        importing.value = false
-        return
-      }
-      
-      await ElMessageBox.confirm(
-        '导入数据将覆盖现有所有内容，是否继续？',
-        '确认导入',
-        { type: 'warning' }
-      )
-
-      const text = await file.text()
-      await storageService.importFromJSON(text)
-      await scheduleStore.loadFromStorage()
-      
-      ElMessage.success('数据导入成功')
-    } catch (error) {
-      if (error !== 'cancel') {
-        ElMessage.error(`导入失败: ${error.message}`)
-      }
-    } finally {
-      importing.value = false
-    }
-  }
-  
-  input.click()
 }
 
 const handleClearData = async () => {
@@ -334,66 +284,69 @@ defineExpose({
 
 /* 移动端适配 */
 @media (max-width: 768px) {
-  :deep(.settings-dialog) {
-    width: 95vw !important;
-    margin: 5vh auto;
-  }
-  
-  :deep(.settings-dialog .el-dialog__header) {
-    padding: var(--el-dialog-padding-primary) var(--el-dialog-padding-primary) 0;
-  }
-  
-  :deep(.settings-dialog .el-dialog__body) {
-    padding: var(--el-dialog-padding-primary);
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-
   :deep(.el-dialog) {
-    width: 95% !important;
-    margin: 5vh auto !important;
+    width: 80% !important;
+    margin: 6vh auto !important;
+    border-radius: 12px;
   }
 
   :deep(.el-dialog__header) {
-    padding: var(--el-dialog-padding-primary, 15px 20px 10px);
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 18px;
+    font-weight: 600;
   }
 
   :deep(.el-dialog__body) {
-    padding: var(--el-dialog-content-padding, 10px 20px);
+    padding: 20px 24px;
+    max-height: 65vh;
+    overflow-y: auto;
   }
 
   :deep(.el-dialog__footer) {
-    padding: var(--el-dialog-padding-primary, 10px 20px 15px);
+    padding: 12px 24px 20px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
   }
 
   :deep(.el-form-item__label) {
-    font-size: var(--el-font-size-small);
+    font-size: 14px;
+    font-weight: 500;
   }
 
   .setting-section {
-    padding: var(--el-padding-base, 16px);
-    margin-bottom: var(--el-margin-base, 16px);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
   }
   
   .section-title {
-    font-size: var(--el-font-size-base);
-    margin-bottom: var(--el-margin-small, 12px);
+    font-size: 16px;
+    margin-bottom: 16px;
   }
   
   .theme-options {
     flex-direction: column;
-    gap: var(--el-margin-base, 12px);
+    gap: 12px;
   }
   
   .theme-option {
-    padding: var(--el-padding-base, 10px);
+    padding: 12px;
     justify-content: center;
+    border-radius: 8px;
   }
 
   .setting-help {
     margin-left: 0;
-    margin-top: var(--el-margin-extra-small, 5px);
-    font-size: var(--el-font-size-extra-small);
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.4;
   }
 
   :deep(.el-date-editor) {
@@ -409,86 +362,155 @@ defineExpose({
   }
 
   :deep(.el-button) {
-    font-size: var(--el-font-size-small);
-    padding: var(--el-button-padding-vertical) var(--el-button-padding-horizontal);
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    min-height: 44px;
   }
 
-  .time-settings-header,
-  .time-setting-row {
-    grid-template-columns: 60px 100px 100px;
-    gap: var(--el-margin-small, 8px);
+  :deep(.el-radio-button__inner) {
+    font-size: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
   }
 
-  .period-label {
-    font-size: var(--el-font-size-small);
-  }
-
-  .time-setting-row :deep(.el-time-picker) {
-    width: 90px !important;
+  :deep(.el-switch) {
+    --el-switch-on-color: var(--el-color-primary);
   }
 }
 
 @media (max-width: 480px) {
   :deep(.el-dialog) {
-    width: 98% !important;
-    margin: 2vh auto !important;
+    width: 85% !important;
+    margin: 4vh auto !important;
+    max-height: 90vh;
+    border-radius: 16px;
   }
 
-  :deep(.settings-dialog) {
-    width: 98vw !important;
-    margin: 2vh auto;
+  :deep(.el-dialog__header) {
+    padding: 16px 20px 10px;
   }
-  
-  :deep(.settings-dialog .el-dialog__body) {
-    padding: var(--el-padding-base, 12px);
-    max-height: 80vh;
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
   }
-  
-  :deep(.settings-dialog .el-dialog__header) {
-    padding: var(--el-padding-base, 12px) var(--el-padding-base, 12px) 0;
+
+  :deep(.el-dialog__body) {
+    padding: 16px 20px;
+    max-height: 70vh;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 20px 16px;
   }
 
   :deep(.el-form) {
-    --el-form-label-font-size: 12px;
+    --el-form-label-font-size: 13px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
   }
 
   :deep(.el-form-item__label) {
-    width: 80px !important;
-    font-size: var(--el-font-size-small);
+    width: 85px !important;
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   .setting-section {
-    padding: var(--el-padding-small, 12px);
-    margin-bottom: var(--el-margin-small, 12px);
+    padding: 16px;
+    margin-bottom: 16px;
   }
   
   .section-title {
-    font-size: var(--el-font-size-small);
-    margin-bottom: var(--el-margin-small, 8px);
+    font-size: 14px;
+    margin-bottom: 12px;
   }
 
   .setting-help {
-    font-size: var(--el-font-size-extra-small);
+    font-size: 11px;
+    margin-top: 6px;
+    line-height: 1.3;
   }
 
   :deep(.el-radio-button__inner) {
-    font-size: var(--el-font-size-small);
-    padding: var(--el-button-padding-vertical) var(--el-button-padding-horizontal);
+    font-size: 13px;
+    padding: 10px 14px;
   }
 
   :deep(.el-button) {
-    font-size: var(--el-font-size-small);
-    padding: var(--el-padding-extra-small, 6px) var(--el-padding-small, 12px);
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .dialog-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dialog-footer .el-button {
+    width: 100%;
   }
 
   .el-form-item {
-    margin-bottom: var(--el-margin-medium, 15px);
+    margin-bottom: 16px;
   }
 
   .el-divider {
-    margin: var(--el-margin-large, 18px) 0;
+    margin: 16px 0;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 360px) {
+  :deep(.el-dialog) {
+    width: 88% !important;
+    margin: 2vh auto !important;
   }
 
+  :deep(.el-dialog__header) {
+    padding: 12px 16px 8px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 8px 16px 12px;
+  }
+
+  :deep(.el-form-item__label) {
+    width: 75px !important;
+    font-size: 12px;
+  }
+
+  .setting-section {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .section-title {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .setting-help {
+    font-size: 10px;
+  }
+
+  :deep(.el-radio-button__inner) {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  :deep(.el-button) {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
 }
 
 /* 对话框滚动条美化 */

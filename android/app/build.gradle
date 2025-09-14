@@ -27,6 +27,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    
+    bundle {
+        abi {
+            enableSplit false
+        }
+        density {
+            enableSplit false
+        }
+        language {
+            enableSplit false
+        }
+    }
 }
 
 repositories {

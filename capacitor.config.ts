@@ -5,7 +5,17 @@ const config: CapacitorConfig = {
   appName: 'CourseSchedule',
   webDir: 'out/renderer',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    cleartext: true
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true
+  },
+  ios: {
+    allowsLinkPreview: false,
+    webContentsDebuggingEnabled: true
   }
 };
 

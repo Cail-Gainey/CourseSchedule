@@ -19,12 +19,20 @@ class StorageService {
    * 检查是否在 Electron 环境中，选择合适的存储方式
    */
   init() {
-    this.isElectron = typeof window !== 'undefined' && window.electronAPI
-    
-    if (this.isElectron) {
-      console.log('使用 Electron Store 进行数据存储')
-    } else {
-      console.log('使用 localStorage 进行数据存储')
+    try {
+      // 更安全的环境检测
+      this.isElectron = typeof window !== 'undefined' && 
+                       window.electronAPI && 
+                       typeof window.electronAPI.storage === 'object'
+      
+      if (this.isElectron) {
+        console.log('使用 Electron Store 进行数据存储')
+      } else {
+        console.log('使用 localStorage 进行数据存储')
+      }
+    } catch (error) {
+      console.warn('存储服务初始化时检测环境失败，使用 localStorage:', error)
+      this.isElectron = false
     }
   }
 
@@ -145,7 +153,7 @@ class StorageService {
    */
   async clearAllData() {
     try {
-      if (this.isElectron) {
+      if (this.isElectron && window.electronAPI && window.electronAPI.storage) {
         await window.electronAPI.storage.clear()
       } else {
         localStorage.removeItem(this.storageKey)
@@ -155,61 +163,23 @@ class StorageService {
       return true
     } catch (error) {
       console.error('清除数据失败:', error)
-      throw new Error(`清除数据失败: ${error.message}`)
-    }
-  }
-
-  /**
-   * 导出数据为 JSON
-   * @returns {string} JSON 字符串
-   */
-  async exportToJSON() {
-    try {
-      const scheduleData = await this.loadScheduleData()
-      const settings = await this.loadSettings()
-      
-      const exportData = {
-        scheduleData,
-        settings,
-        exportInfo: {
-          exportDate: new Date(),
-          version: '1.0.0',
-          source: 'CourseScheduleManager'
+      // 如果Electron清除失败，尝试使用localStorage作为备用
+      if (this.isElectron) {
+        console.warn('Electron清除失败，尝试使用localStorage作为备用')
+        try {
+          localStorage.removeItem(this.storageKey)
+          localStorage.removeItem(this.settingsKey)
+          console.log('使用localStorage备用清除成功')
+          return true
+        } catch (fallbackError) {
+          console.error('localStorage备用清除也失败:', fallbackError)
+          throw new Error(`清除数据失败: ${fallbackError.message}`)
         }
+      } else {
+        throw new Error(`清除数据失败: ${error.message}`)
       }
-
-      return JSON.stringify(exportData, null, 2)
-    } catch (error) {
-      console.error('导出数据失败:', error)
-      throw new Error(`导出失败: ${error.message}`)
     }
   }
-
-  /**
-   * 从 JSON 导入数据
-   * @param {string} jsonString - JSON 字符串
-   */
-  async importFromJSON(jsonString) {
-    try {
-      const importData = JSON.parse(jsonString)
-      
-      if (importData.scheduleData) {
-        await this.saveScheduleData(importData.scheduleData)
-      }
-      
-      if (importData.settings) {
-        await this.saveSettings(importData.settings)
-      }
-
-      console.log('数据导入成功')
-      return true
-    } catch (error) {
-      console.error('导入数据失败:', error)
-      throw new Error(`导入失败: ${error.message}`)
-    }
-  }
-
-  // 私有方法
 
   /**
    * 保存数据到存储
@@ -218,7 +188,7 @@ class StorageService {
   async _saveToStorage(key, data) {
     try {
       const plainData = JSON.parse(JSON.stringify(data))
-      if (this.isElectron) {
+      if (this.isElectron && window.electronAPI && window.electronAPI.storage) {
         await window.electronAPI.storage.set(key, plainData)
       } else {
         localStorage.setItem(key, JSON.stringify(plainData))
@@ -226,7 +196,18 @@ class StorageService {
     } catch (error) {
       console.error('Error in _saveToStorage:', error)
       console.error('Data that failed to save:', data)
-      throw error
+      // 如果Electron存储失败，尝试使用localStorage作为备用
+      if (this.isElectron) {
+        console.warn('Electron存储失败，尝试使用localStorage作为备用')
+        try {
+          localStorage.setItem(key, JSON.stringify(plainData))
+        } catch (fallbackError) {
+          console.error('localStorage备用存储也失败:', fallbackError)
+          throw fallbackError
+        }
+      } else {
+        throw error
+      }
     }
   }
 
@@ -235,11 +216,29 @@ class StorageService {
    * @private
    */
   async _loadFromStorage(key) {
-    if (this.isElectron) {
-      return await window.electronAPI.storage.get(key)
-    } else {
-      const data = localStorage.getItem(key)
-      return data ? JSON.parse(data) : null
+    try {
+      if (this.isElectron && window.electronAPI && window.electronAPI.storage) {
+        return await window.electronAPI.storage.get(key)
+      } else {
+        const data = localStorage.getItem(key)
+        return data ? JSON.parse(data) : null
+      }
+    } catch (error) {
+      console.error('Error in _loadFromStorage:', error)
+      // 如果Electron存储失败，尝试使用localStorage作为备用
+      if (this.isElectron) {
+        console.warn('Electron存储失败，尝试使用localStorage作为备用')
+        try {
+          const data = localStorage.getItem(key)
+          return data ? JSON.parse(data) : null
+        } catch (fallbackError) {
+          console.error('localStorage备用存储也失败:', fallbackError)
+          return null
+        }
+      } else {
+        console.error('localStorage读取失败:', error)
+        return null
+      }
     }
   }
 

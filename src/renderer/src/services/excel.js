@@ -3,7 +3,7 @@ import { createCourse, validateCourse } from '../utils/index.js'
 import * as XLSX from 'xlsx'
 
 /**
- * Excel 处理服务 - 使用 vue-json-excel 方案
+ * Excel 处理服务
  */
 export class ExcelService {
   constructor() {
@@ -330,8 +330,8 @@ export class ExcelService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
       
-      // 判断是否为课程名称行（包含[考查]、[必修]、[选修]等标记）
-       if (line.match(/\[(考查|必修|选修|实践|理论)\]/)) {
+      // 判断是否为课程名称行（包含[考查]、[必修]、[选修]、[考试]等标记）
+       if (line.match(/\[(考查|必修|选修|实践|理论|考试)\]/)) {
         
         // 如果当前块不为空，保存它
         if (currentBlock.length > 0) {
@@ -377,7 +377,7 @@ export class ExcelService {
       // 提取课程名称（只保留课程名称部分）
       const originalName = courseName
       // 提取课程名称（在第一个方括号之前的内容）
-      const courseNameMatch = courseName.match(/^([^\[]+)\[(考查|必修|选修|实践|理论)\]/)
+      const courseNameMatch = courseName.match(/^([^\[]+)\[(考查|必修|选修|实践|理论|考试)\]/)
       if (courseNameMatch) {
         courseName = courseNameMatch[1].trim()
       } else {
@@ -423,11 +423,21 @@ export class ExcelService {
         teacher = teacherMatch[1]
         console.log('找到教师:', teacher)
       } else {
-        // 尝试其他教师匹配模式
-        const nameMatch = blockText.match(/([\u4e00-\u9fa5]{2,4})(?:老师|教师)?/)
-        if (nameMatch && nameMatch[1] !== courseName.replace(/\s+/g, '')) {
-          teacher = nameMatch[1]
-          console.log('通过姓名模式找到教师:', teacher)
+        // 尝试匹配更多教师格式：姓名-工号、姓名[角色]等
+        const teacherPatterns = [
+          /([\u4e00-\u9fa5]{2,4})-\w+/,  // 姓名-工号
+          /([\u4e00-\u9fa5]{2,4})\[(主讲|辅讲|教师)\]/,  // 姓名[角色]
+          /教师[：:]\s*([\u4e00-\u9fa5]{2,4})/,  // 教师：姓名
+          /([\u4e00-\u9fa5]{2,4})(?:老师|教师)/  // 姓名老师/教师
+        ]
+        
+        for (const pattern of teacherPatterns) {
+          const match = blockText.match(pattern)
+          if (match && match[1] !== courseName.replace(/\s+/g, '')) {
+            teacher = match[1]
+            console.log('通过模式找到教师:', teacher)
+            break
+          }
         }
       }
       
@@ -440,18 +450,37 @@ export class ExcelService {
       let location = ''
       
       // 匹配地点模式（如：鸿蒙开发实验室 A8307、多媒体教室 A7202）
-      const locationMatch = blockText.match(/(\w+实验室|\w+教室)\s+([A-Z]?\d{3,4}[A-Z]?)/) ||
-                           blockText.match(/([A-Z]?\d{3,4}[A-Z]?)\([^)]+\)/) ||
-                           blockText.match(/([A-Z]?\d{3,4}[A-Z]?)/)
+      const locationPatterns = [
+        /(\w+实验室|\w+教室)\s+([A-Z]?\d{3,4}[A-Z]?)/,  // 实验室/教室 + 房间号
+        /([A-Z]?\d{3,4}[A-Z]?)\([^)]+\)/,  // 房间号(描述)
+        /地点[：:]\s*([A-Z]?\d{3,4}[A-Z]?)/,  // 地点：房间号
+        /教室[：:]\s*([A-Z]?\d{3,4}[A-Z]?)/,  // 教室：房间号
+        /([A-Z]?\d{3,4}[A-Z]?)(?!\d)/  // 独立的房间号
+      ]
       
-      if (locationMatch) {
-        if (locationMatch[2]) {
-          location = locationMatch[2] // 提取房间号
-        } else {
-          location = locationMatch[1]
+      for (const pattern of locationPatterns) {
+        const match = blockText.match(pattern)
+        if (match) {
+          if (match[2]) {
+            location = match[2] // 提取房间号
+          } else if (match[1] && /^[A-Z]?\d{3,4}[A-Z]?$/.test(match[1])) {
+            location = match[1]
+          }
+          if (location) {
+            console.log('找到地点:', location)
+            break
+          }
         }
-        console.log('找到地点:', location)
       }
+      
+      if (!location) {
+         // 尝试提取中文地点信息
+         const chineseLocationMatch = blockText.match(/(\w+实验室|\w+教室|\w+机房)/)
+         if (chineseLocationMatch) {
+           location = chineseLocationMatch[1]
+           console.log('找到中文地点:', location)
+         }
+       }
       
       if (!location) {
         console.log('未找到地点信息，使用默认值')
@@ -461,68 +490,91 @@ export class ExcelService {
       console.log('开始提取周次信息...')
       let weeks = '1-16'
       
-      // 匹配复杂的周次格式，如[1-3,5-16周]、[9-16周]等
-      const complexWeekMatch = blockText.match(/\[([\d,-]+)周\]/)
-      if (complexWeekMatch) {
-        const weekStr = complexWeekMatch[1]
-        console.log('找到复杂周次格式:', weekStr)
-        
-        // 解析复杂周次格式
-        const weekRanges = weekStr.split(',')
-        const allWeeks = []
-        
-        weekRanges.forEach(range => {
-          range = range.trim()
-          if (range.includes('-')) {
-            // 处理范围格式，如"1-3"或"5-16"
-            const [start, end] = range.split('-').map(num => parseInt(num.trim()))
-            for (let i = start; i <= end; i++) {
-              allWeeks.push(i)
-            }
-          } else {
-            // 处理单个周次
-            allWeeks.push(parseInt(range))
-          }
-        })
-        
-        // 排序并去重
-        const uniqueWeeks = [...new Set(allWeeks)].sort((a, b) => a - b)
-        
-        // 转换为连续范围格式
-        if (uniqueWeeks.length > 0) {
-          const minWeek = Math.min(...uniqueWeeks)
-          const maxWeek = Math.max(...uniqueWeeks)
-          weeks = `${minWeek}-${maxWeek}`
-          console.log('解析后的周次范围:', weeks, '包含周次:', uniqueWeeks)
+      // 匹配各种周次格式
+      const weekPatterns = [
+        /\[([\d,-]+)周\]/,  // [1-3,5-16周] 复杂格式
+        /\[(\d+)-(\d+)周\]/,  // [9-16周] 简单范围
+        /\[(\d+)周\]/,  // [1周] 单周
+        /(\d+)-(\d+)周/,  // 9-16周 无方括号
+        /第(\d+)周/,  // 第1周
+        /周次[：:]\s*([\d,-]+)/,  // 周次：1-3,5-16
+        /([\d,-]+)周/  // 1-3,5-16周
+      ]
+      
+      let weekMatch = null
+      let matchedPattern = ''
+      
+      for (const pattern of weekPatterns) {
+        weekMatch = blockText.match(pattern)
+        if (weekMatch) {
+          matchedPattern = pattern.toString()
+          break
         }
-      } else {
-        // 兼容原有简单格式
-        const bracketWeekMatch = blockText.match(/\[(\d+)-(\d+)周\]/)
-        if (bracketWeekMatch) {
-          weeks = `${bracketWeekMatch[1]}-${bracketWeekMatch[2]}`
-          console.log('从方括号中找到周次范围:', weeks)
-        } else {
-          const singleBracketWeekMatch = blockText.match(/\[(\d+)周\]/)
-          if (singleBracketWeekMatch) {
-            weeks = `${singleBracketWeekMatch[1]}-${singleBracketWeekMatch[1]}`
-            console.log('从方括号中找到单周次:', weeks)
-          } else {
-            // 兼容原有格式
-            const weekMatch = blockText.match(/(\d+)-(\d+)周/)
-            if (weekMatch) {
-              weeks = `${weekMatch[1]}-${weekMatch[2]}`
-              console.log('找到周次范围:', weeks)
+      }
+      
+      if (weekMatch) {
+        const weekStr = weekMatch[1]
+        console.log('找到周次格式:', weekStr, '匹配模式:', matchedPattern)
+        
+        if (weekStr.includes(',') || weekStr.includes('-')) {
+          // 解析复杂周次格式
+          const weekRanges = weekStr.split(',')
+          const allWeeks = []
+          
+          weekRanges.forEach(range => {
+            range = range.trim()
+            if (range.includes('-')) {
+              // 处理范围格式，如"1-3"或"5-16"
+              const [start, end] = range.split('-').map(num => parseInt(num.trim()))
+              if (!isNaN(start) && !isNaN(end) && start <= end) {
+                for (let i = start; i <= end; i++) {
+                  allWeeks.push(i)
+                }
+              }
             } else {
-              const singleWeekMatch = blockText.match(/第(\d+)周/)
-              if (singleWeekMatch) {
-                weeks = `${singleWeekMatch[1]}-${singleWeekMatch[1]}`
-                console.log('找到单周次:', weeks)
-              } else {
-                console.log('未找到周次信息，使用默认值:', weeks)
+              // 处理单个周次
+              const weekNum = parseInt(range)
+              if (!isNaN(weekNum)) {
+                allWeeks.push(weekNum)
               }
             }
+          })
+          
+          // 排序并去重
+          const uniqueWeeks = [...new Set(allWeeks)].sort((a, b) => a - b)
+          
+          if (uniqueWeeks.length > 0) {
+            // 检查是否为连续周次
+            let isConsecutive = true
+            for (let i = 1; i < uniqueWeeks.length; i++) {
+              if (uniqueWeeks[i] !== uniqueWeeks[i-1] + 1) {
+                isConsecutive = false
+                break
+              }
+            }
+            
+            if (isConsecutive) {
+              // 连续周次，使用范围格式
+              weeks = `${uniqueWeeks[0]}-${uniqueWeeks[uniqueWeeks.length - 1]}`
+            } else {
+              // 不连续周次，保持原格式或转换为最大范围
+              const minWeek = Math.min(...uniqueWeeks)
+              const maxWeek = Math.max(...uniqueWeeks)
+              weeks = `${minWeek}-${maxWeek}`
+              console.log('不连续周次转换为范围:', weeks, '实际包含:', uniqueWeeks)
+            }
+            console.log('解析后的周次范围:', weeks, '包含周次:', uniqueWeeks)
+          }
+        } else {
+          // 单个数字
+          const weekNum = parseInt(weekStr)
+          if (!isNaN(weekNum)) {
+            weeks = `${weekNum}-${weekNum}`
+            console.log('单周次:', weeks)
           }
         }
+      } else {
+        console.log('未找到周次信息，使用默认值:', weeks)
       }
       
       // 从课程块中提取节次信息
@@ -639,60 +691,40 @@ export class ExcelService {
      return ''
    }
 
-
-
   /**
-   * 创建课程表数据结构
+   * 生成示例Excel文件并下载
    */
-  static createScheduleData(courses) {
-    const scheduleData = []
-    
-    // 添加表头
-    scheduleData.push({
-      '节次': '节次/星期',
-      '星期一': '星期一',
-      '星期二': '星期二', 
-      '星期三': '星期三',
-      '星期四': '星期四',
-      '星期五': '星期五',
-      '星期六': '星期六',
-      '星期日': '星期日'
-    })
-    
-    // 创建课程映射
-    const courseMap = new Map()
-    courses.forEach(course => {
-      const key = `${course.day}-${course.period}`
-      if (!courseMap.has(key)) {
-        courseMap.set(key, [])
+  static async generateAndDownloadExcel() {
+    try {
+      // 导入assets目录中的example.xlsx文件
+      const exampleFileUrl = new URL('../assets/example.xlsx', import.meta.url)
+      const response = await fetch(exampleFileUrl)
+      
+      if (!response.ok) {
+        throw new Error('无法获取示例文件')
       }
-      courseMap.get(key).push(course)
-    })
-    
-    // 添加课程数据
-    for (let i = 1; i <= 12; i++) {
-      const period = `第${i}节`
-      const row = { '节次': period }
       
-      DAYS_OF_WEEK.forEach(day => {
-        const key = `${day}-${period}`
-        const coursesInSlot = courseMap.get(key) || []
-        
-        if (coursesInSlot.length > 0) {
-          const courseTexts = coursesInSlot.map(course => 
-            `${course.course}\n${course.teacher}\n${course.location}\n${course.weeks}周`
-          )
-          row[day] = courseTexts.join('\n\n')
-        } else {
-          row[day] = ''
-        }
-      })
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
       
-      scheduleData.push(row)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = '课程表示例.xlsx'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      URL.revokeObjectURL(url)
+      
+      console.log('示例Excel文件下载成功')
+    } catch (error) {
+      console.error('下载示例Excel文件失败:', error)
+      throw new Error(`下载示例文件失败: ${error.message}`)
     }
-    
-    return scheduleData
   }
+
+
+
 }
 
 export default ExcelService

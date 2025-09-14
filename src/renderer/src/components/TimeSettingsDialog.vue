@@ -234,11 +234,110 @@ defineExpose({
   overflow-y: auto;
 }
 
-/* 响应式设计 */
+/* 移动端适配 */
 @media (max-width: 768px) {
-  .time-settings-dialog {
-    width: 90vw !important;
-    margin: 0 auto;
+  :deep(.el-dialog) {
+    width: 80% !important;
+    margin: 6vh auto !important;
+    border-radius: 12px;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 20px 24px;
+    max-height: 65vh;
+    overflow-y: auto;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 12px 24px 20px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  .time-form {
+    max-height: none;
+  }
+  
+  .time-settings-header,
+  .time-setting-row {
+    grid-template-columns: 70px 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .period-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  :deep(.el-time-picker) {
+    width: 100% !important;
+  }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 8px;
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  :deep(.el-button) {
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    min-height: 44px;
+  }
+
+  .setting-help {
+    font-size: 12px;
+    margin-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  :deep(.el-dialog) {
+    width: 85% !important;
+    margin: 4vh auto !important;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 16px 20px 10px;
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 16px 20px;
+    max-height: 70vh;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 20px 16px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .time-settings-header {
+    font-size: 12px;
+    margin-bottom: 12px;
   }
   
   .time-settings-header,
@@ -249,6 +348,73 @@ defineExpose({
   
   .period-label {
     font-size: 12px;
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+  }
+
+  :deep(.el-button) {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .dialog-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dialog-footer .el-button {
+    width: 100%;
+  }
+
+  .setting-help {
+    font-size: 11px;
+    margin-top: 12px;
+    line-height: 1.3;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 360px) {
+  :deep(.el-dialog) {
+    width: 88% !important;
+    margin: 2vh auto !important;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 12px 16px 8px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 8px 16px 12px;
+  }
+
+  .time-settings-header,
+  .time-setting-row {
+    grid-template-columns: 50px 1fr 1fr;
+    gap: 6px;
+  }
+
+  .period-label {
+    font-size: 11px;
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .setting-help {
+    font-size: 10px;
   }
 }
 </style>

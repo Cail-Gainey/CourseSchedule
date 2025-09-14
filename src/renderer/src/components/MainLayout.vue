@@ -17,10 +17,11 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="import-excel" :icon="Upload">导入 Excel</el-dropdown-item>
-                    <el-dropdown-item command="generate-sample" :icon="DocumentAdd">生成示例数据</el-dropdown-item>
+                    <el-dropdown-item command="generate-sample" :icon="Download">生成示例数据</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
+
             </div>
             
             <el-divider direction="vertical" />
@@ -72,12 +73,12 @@ import WeekSelector from './WeekSelector.vue'
 import CourseEditDialog from './CourseEditDialog.vue'
 import SettingsDialog from './SettingsDialog.vue'
 import TimeSettingsDialog from './TimeSettingsDialog.vue'
-import { ElConfigProvider, ElContainer, ElHeader, ElMain, ElButton, ElButtonGroup, ElIcon, ElSwitch, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDivider, ElMessage, ElMessageBox } from 'element-plus'
-import { Moon as MoonIcon, Sunny as SunIcon, Upload, Plus, Refresh, Setting, DocumentAdd, ArrowDown, Clock } from '@element-plus/icons-vue'
+import { ElConfigProvider, ElContainer, ElHeader, ElMain, ElButton, ElIcon, ElSwitch, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDivider, ElMessage, ElMessageBox } from 'element-plus'
+import { Moon as MoonIcon, Sunny as SunIcon, Upload, Plus, Refresh, Setting, ArrowDown, Clock, Download } from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { validateCourse } from '../utils/index.js'
 import ExcelService from '../services/excel.js'
-import * as XLSX from 'xlsx'
+
 
 const scheduleStore = useScheduleStore()
 
@@ -136,11 +137,9 @@ const handleImportCommand = async (command) => {
   if (command === 'import-excel') {
     await handleImportExcel()
   } else if (command === 'generate-sample') {
-    handleGenerateSample()
+    await handleGenerateSample()
   }
 }
-
-
 
 const handleImportExcel = async () => {
   try {
@@ -253,17 +252,12 @@ const handleImportExcel = async () => {
         }
       }
     }
-    
     input.click()
   } catch (error) {
     ElMessage.error(`导入失败: ${error.message}`)
     console.error('Excel 导入错误:', error)
   }
 }
-
-
-
-
 
 const handleAddCourse = () => {
   if (courseEditDialogRef.value) {
@@ -291,154 +285,22 @@ const handleTimeSettings = () => {
     timeSettingsDialogRef.value.openDialog()
   }
 }
- 
+
 const handleGenerateSample = async () => {
   try {
-    const sampleCourses = [
-      {
-        id: '1',
-        day: '星期一',
-        period: '第1节',
-        course: '数据结构',
-        teacher: '张三',
-        location: 'A301',
-        weeks: '1-16'
-      },
-      {
-        id: '2',
-        day: '星期一',
-        period: '第2节',
-        course: '数据结构',
-        teacher: '张三',
-        location: 'A301',
-        weeks: '1-16'
-      },
-      {
-        id: '3',
-        day: '星期二',
-        period: '第2节',
-        course: '操作系统',
-        teacher: '王五',
-        location: 'C103',
-        weeks: '1-16'
-      },
-      {
-        id: '4',
-        day: '星期三',
-        period: '第1节',
-        course: '计算机网络',
-        teacher: '李四',
-        location: 'B202',
-        weeks: '1-16'
-      },
-      {
-        id: '5',
-        day: '星期四',
-        period: '第3节',
-        course: '软件工程',
-        teacher: '赵六',
-        location: 'D404',
-        weeks: '1-16'
-      },
-      {
-        id: '6',
-        day: '星期五',
-        period: '第1节',
-        course: '数据库原理',
-        teacher: '陈七',
-        location: 'E505',
-        weeks: '1-16'
-      },
-      {
-        id: '7',
-        day: '星期五',
-        period: '第2节',
-        course: '数据库原理',
-        teacher: '陈七',
-        location: 'E505',
-        weeks: '1-16'
-      },
-      {
-        id: '8',
-        day: '星期二',
-        period: '第3节',
-        course: '算法设计',
-        teacher: '刘八',
-        location: 'F606',
-        weeks: '1-16'
-      }
-    ]
-
-    // 生成Excel文件并下载
-    await generateAndDownloadExcel(sampleCourses)
-    
-    ElMessage.success('示例Excel文件已生成并下载到您的系统')
+    await ExcelService.generateAndDownloadExcel()
+    ElMessage.success('示例Excel文件已生成并下载')
   } catch (error) {
-    ElMessage.error(`生成示例数据失败: ${error.message}`)
-    console.error('生成示例数据错误:', error)
+    console.error('生成示例文件失败:', error)
+    ElMessage.error(`生成示例文件失败: ${error.message}`)
   }
 }
+ 
 
-const generateAndDownloadExcel = async (courses) => {
-  try {
-    // 创建课程表数据结构
-    const scheduleData = ExcelService.createScheduleData(courses)
-    
-    // 创建工作簿
-    const workbook = XLSX.utils.book_new()
-    
-    // 将数据转换为工作表
-    const worksheet = XLSX.utils.json_to_sheet(scheduleData)
-    
-    // 设置列宽
-    const colWidths = [
-      { wch: 10 }, // 节次列
-      { wch: 20 }, // 星期一
-      { wch: 20 }, // 星期二
-      { wch: 20 }, // 星期三
-      { wch: 20 }, // 星期四
-      { wch: 20 }, // 星期五
-      { wch: 20 }, // 星期六
-      { wch: 20 }  // 星期日
-    ]
-    worksheet['!cols'] = colWidths
-    
-    // 设置行高
-    const rowHeights = []
-    for (let i = 0; i <= 12; i++) {
-      rowHeights.push({ hpt: i === 0 ? 25 : 60 }) // 表头行25，数据行60
-    }
-    worksheet['!rows'] = rowHeights
-    
-    // 添加工作表到工作簿
-    XLSX.utils.book_append_sheet(workbook, worksheet, '课程表')
-    
-    // 生成Excel文件
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-    
-    // 创建Blob对象
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    
-    // 创建下载链接
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'example.xlsx'
-    
-    // 触发下载
-    document.body.appendChild(link)
-    link.click()
-    
-    // 清理
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-    
-    console.log('Excel文件已生成并下载')
-  } catch (error) {
-    console.error('生成Excel文件失败:', error)
-    throw error
-  }
-}
+
+
+
+
 
 </script>
 

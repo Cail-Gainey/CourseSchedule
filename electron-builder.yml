@@ -1,5 +1,6 @@
 appId: com.electron.app
 productName: 课程表
+icon: resources/icon.png
 directories:
   buildResources: build
 files:
@@ -27,9 +28,9 @@ nsis:
   allowElevation: true
   oneClick: false
   perMachine: false
-  installerIcon: build/icon.ico
-  uninstallerIcon: build/icon.ico
-  installerHeaderIcon: build/icon.ico
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  installerHeaderIcon: resources/icon.ico
   deleteAppDataOnUninstall: false
   runAfterFinish: true
   menuCategory: false
@@ -41,6 +42,7 @@ nsis:
   warningsAsErrors: false
   differentialPackage: true
 mac:
+  icon: resources/icon.png
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -51,6 +53,7 @@ mac:
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
+  icon: resources/icon.png
   target:
     - AppImage
     - snap

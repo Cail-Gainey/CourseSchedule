@@ -8,7 +8,7 @@
           <thead>
             <tr>
               <th class="time-header">节次/星期</th>
-              <th v-for="day in DAYS_OF_WEEK" :key="day" class="day-header">
+              <th v-for="day in displayDays" :key="day" class="day-header">
                 {{ day }}
               </th>
             </tr>
@@ -24,7 +24,7 @@
                 </div>
               </td>
               <td
-                v-for="day in DAYS_OF_WEEK"
+                v-for="day in displayDays"
                 :key="`${day}-${period}`"
                 class="course-cell"
                 @click.left.stop="handleCellClick(day, period)"
@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, onMounted, onUnmounted } from 'vue'
 import { useScheduleStore } from '../stores/schedule'
 import { DAYS_OF_WEEK, PERIODS } from '../types/index.js'
 import { getTimeSlotKey, getPeriodTimeText } from '../utils/index.js'
@@ -99,6 +99,29 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 const scheduleStore = useScheduleStore()
 const courseEditDialog = inject('courseEditDialog')
+
+// 检测是否为移动端设备
+const isMobile = computed(() => windowWidth.value < 768)
+
+// 检测周末是否有课程
+const hasWeekendCourses = computed(() => {
+  const weekendDays = ['星期六', '星期日']
+  return weekendDays.some(day => {
+    return PERIODS.some(period => {
+      const course = getCourseInSlot(day, period)
+      return course !== null
+    })
+  })
+})
+
+// 根据移动端和周末课程情况决定显示的星期
+const displayDays = computed(() => {
+  if (isMobile.value && !hasWeekendCourses.value) {
+    // 移动端且周末没有课程时，只显示工作日
+    return DAYS_OF_WEEK.slice(0, 5) // 星期一到星期五
+  }
+  return DAYS_OF_WEEK // 显示全部星期
+})
 
 // 响应式窗口尺寸
 const windowWidth = ref(window.innerWidth)

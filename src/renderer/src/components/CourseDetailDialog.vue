@@ -138,70 +138,159 @@ defineExpose({
 /* 移动端适配 */
 @media (max-width: 768px) {
   :deep(.el-dialog) {
-    width: 95% !important;
-    margin: 5vh auto !important;
+    width: 80% !important;
+    margin: 8vh auto !important;
+    border-radius: 12px;
   }
 
   :deep(.el-dialog__header) {
-    padding: 15px 20px 10px;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 18px;
+    font-weight: 600;
   }
 
   :deep(.el-dialog__body) {
-    padding: 10px 20px;
+    padding: 20px 24px;
   }
 
   :deep(.el-dialog__footer) {
-    padding: 10px 20px 15px;
+    padding: 12px 24px 20px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  .course-detail {
+    padding: 0;
   }
 
   .detail-item {
-    margin-bottom: 12px;
-    font-size: 13px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
+  }
+
+  .detail-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
   }
 
   .detail-item label {
-    width: 80px;
-    font-size: 13px;
+    width: 90px;
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .detail-item span {
+    font-size: 14px;
+    font-weight: 500;
   }
 
   .dialog-footer {
-    gap: 8px;
+    gap: 12px;
   }
 
   .dialog-footer .el-button {
-    font-size: 13px;
-    padding: 8px 15px;
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    min-height: 44px;
   }
 }
 
 @media (max-width: 480px) {
   :deep(.el-dialog) {
-    width: 98% !important;
-    margin: 2vh auto !important;
+    width: 85% !important;
+    margin: 5vh auto !important;
+    max-height: 85vh;
+    border-radius: 16px;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 16px 20px 10px;
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 16px 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 20px 16px;
   }
 
   .detail-item {
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom: 10px;
-    font-size: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    padding: 10px 0;
   }
 
   .detail-item label {
     width: auto;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-size: 12px;
+    font-weight: 600;
+  }
+
+  .detail-item span {
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   .dialog-footer {
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
 
   .dialog-footer .el-button {
     width: 100%;
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 360px) {
+  :deep(.el-dialog) {
+    width: 88% !important;
+    margin: 3vh auto !important;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 12px 16px 8px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 8px 16px 12px;
+  }
+
+  .detail-item {
     font-size: 12px;
-    padding: 8px 12px;
+    padding: 8px 0;
+  }
+
+  .detail-item label {
+    font-size: 11px;
+  }
+
+  .detail-item span {
+    font-size: 12px;
   }
 }
 </style>

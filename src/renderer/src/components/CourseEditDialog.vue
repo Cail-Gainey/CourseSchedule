@@ -217,57 +217,168 @@ defineExpose({
 /* 移动端适配 */
 @media (max-width: 768px) {
   :deep(.el-dialog) {
-    width: 95% !important;
-    margin: 5vh auto !important;
+    width: 80% !important;
+    margin: 6vh auto !important;
+    border-radius: 12px;
   }
 
   :deep(.el-dialog__header) {
-    padding: 15px 20px 10px;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 18px;
+    font-weight: 600;
   }
 
   :deep(.el-dialog__body) {
-    padding: 10px 20px;
+    padding: 20px 24px;
+    max-height: 65vh;
+    overflow-y: auto;
   }
 
   :deep(.el-dialog__footer) {
-    padding: 10px 20px 15px;
+    padding: 12px 24px 20px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
   }
 
   :deep(.el-form-item__label) {
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+  }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 8px;
   }
 
   :deep(.el-input__inner) {
     font-size: 14px;
+    padding: 12px 16px;
+    min-height: 44px;
   }
 
   :deep(.el-select .el-input__inner) {
     font-size: 14px;
+    min-height: 44px;
+  }
+
+  :deep(.el-select__wrapper) {
+    border-radius: 8px;
+  }
+
+  :deep(.el-button) {
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    min-height: 44px;
+  }
+
+  .weeks-help {
+    font-size: 12px;
+    margin-top: 6px;
   }
 }
 
 @media (max-width: 480px) {
   :deep(.el-dialog) {
-    width: 98% !important;
-    margin: 2vh auto !important;
+    width: 85% !important;
+    margin: 4vh auto !important;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 16px 20px 10px;
+  }
+
+  :deep(.el-dialog__title) {
+    font-size: 16px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 16px 20px;
+    max-height: 70vh;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 10px 20px 16px;
   }
 
   :deep(.el-form) {
-    --el-form-label-font-size: 12px;
+    --el-form-label-font-size: 13px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 16px;
   }
 
   :deep(.el-form-item__label) {
-    width: 80px !important;
+    width: 85px !important;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+  }
+
+  :deep(.el-select .el-input__inner) {
+    min-height: 48px;
+  }
+
+  :deep(.el-button) {
+    font-size: 14px;
+    padding: 12px 16px;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .weeks-help {
+    font-size: 11px;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 360px) {
+  :deep(.el-dialog) {
+    width: 88% !important;
+    margin: 2vh auto !important;
+  }
+
+  :deep(.el-dialog__header) {
+    padding: 12px 16px 8px;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 12px 16px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 8px 16px 12px;
+  }
+
+  :deep(.el-form-item__label) {
+    width: 75px !important;
     font-size: 12px;
   }
 
   :deep(.el-input__inner) {
     font-size: 13px;
-    padding: 8px 12px;
+    padding: 10px 14px;
   }
 
   .weeks-help {
-    font-size: 11px;
+    font-size: 10px;
   }
 }
 </style>

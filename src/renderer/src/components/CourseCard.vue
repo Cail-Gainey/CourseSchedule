@@ -20,7 +20,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { User, Location, Clock } from '@element-plus/icons-vue'
+import { User, Location } from '@element-plus/icons-vue'
 import { generateColor, getCourseTimeDescription } from '../utils/index.js'
 import { useScheduleStore } from '../stores/schedule.js'
 
@@ -160,5 +160,20 @@ const cardStyle = computed(() => {
   color: var(--el-text-color-secondary);
   margin-top: 1px;
   margin-bottom: 0;
+}
+
+/* 移动端适配 - 隐藏图标 */
+@media (max-width: 768px) {
+  .course-teacher .el-icon,
+  .course-location .el-icon,
+  .course-time .el-icon {
+    display: none;
+  }
+  
+  .course-teacher,
+  .course-location,
+  .course-time {
+    margin-left: 0;
+  }
 }
 </style>
