@@ -58,6 +58,9 @@
       </el-main>
     </el-container>
 
+    <!-- 周次导航按钮 -->
+    <WeekNavigation />
+
     <!-- 全局对话框 -->
     <CourseEditDialog ref="courseEditDialogRef" />
     <SettingsDialog ref="settingsDialogRef" />
@@ -70,6 +73,7 @@ import { ref, provide, watch } from 'vue'
 import { useScheduleStore } from '../stores/schedule'
 import ScheduleTable from './ScheduleTable.vue'
 import WeekSelector from './WeekSelector.vue'
+import WeekNavigation from './WeekNavigation.vue'
 import CourseEditDialog from './CourseEditDialog.vue'
 import SettingsDialog from './SettingsDialog.vue'
 import TimeSettingsDialog from './TimeSettingsDialog.vue'

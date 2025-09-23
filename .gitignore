@@ -3,6 +3,7 @@ node_modules/
 .pnpm-store/
 .pnpm-debug.log*
 package-lock.json
+pnpm-lock.yaml
 
 # Build outputs
 dist/

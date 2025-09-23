@@ -104,9 +104,21 @@ const courseEditDialog = inject('courseEditDialog')
 const isMobile = computed(() => windowWidth.value < 768)
 
 // 检测周末是否有课程
+/**
+ * 检查某天是否有课程
+ * @param {string} day - 星期（如"星期一"）
+ * @returns {boolean} 该天是否有课程
+ */
+const hasCourseOnDay = (day) => {
+  return PERIODS.some(period => {
+    const course = getCourseInSlot(day, period)
+    return course !== null
+  })
+}
+
+// 检查是否有周末课程
 const hasWeekendCourses = computed(() => {
-  const weekendDays = ['星期六', '星期日']
-  return weekendDays.some(day => {
+  return ['星期六', '星期日'].some(day => {
     return PERIODS.some(period => {
       const course = getCourseInSlot(day, period)
       return course !== null
@@ -114,16 +126,25 @@ const hasWeekendCourses = computed(() => {
   })
 })
 
-// 根据移动端和周末课程情况决定显示的星期
+// 根据移动端、周末课程情况和实际课程安排决定显示的星期
 const displayDays = computed(() => {
-  if (isMobile.value && !hasWeekendCourses.value) {
-    // 移动端且周末没有课程时，只显示工作日
+  // 首先过滤出有课程的天
+  const daysWithCourses = DAYS_OF_WEEK.filter(day => hasCourseOnDay(day))
+  
+  // 如果没有任何课程，显示工作日（避免空表格）
+  if (daysWithCourses.length === 0) {
     return DAYS_OF_WEEK.slice(0, 5) // 星期一到星期五
   }
-  return DAYS_OF_WEEK // 显示全部星期
+  
+  // 移动端优化：如果是移动端且没有周末课程，只显示工作日中有课程的天
+  if (isMobile.value && !hasWeekendCourses.value) {
+    return daysWithCourses.filter(day => !['星期六', '星期日'].includes(day))
+  }
+  
+  // 否则显示所有有课程的天
+  return daysWithCourses
 })
 
-// 响应式窗口尺寸
 const windowWidth = ref(window.innerWidth)
 const windowHeight = ref(window.innerHeight)
 

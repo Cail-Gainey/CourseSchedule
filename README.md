@@ -1,5 +1,5 @@
 
-# 课程表管理系统 (CourseSchedule)
+# 课程表管理系统 (重庆对外经贸学院)
 
 一个基于 Vue 3 + Electron 的现代化课程表管理应用，支持桌面端和移动端多平台部署。
 
@@ -25,7 +25,7 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone <https://github.com/Cail-Gainey/CourseSchedule.git>
 cd CourseSchedule
 
 # 安装依赖
