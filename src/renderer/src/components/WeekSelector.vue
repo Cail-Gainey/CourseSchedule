@@ -6,12 +6,7 @@
       @change="handleWeekChange"
       style="width: 120px"
     >
-      <el-option
-        v-for="week in weeks"
-        :key="week.value"
-        :label="week.label"
-        :value="week.value"
-      />
+      <el-option v-for="week in weeks" :key="week.value" :label="week.label" :value="week.value" />
     </el-select>
   </div>
 </template>
@@ -57,16 +52,22 @@ const handleWeekChange = (value) => {
 }
 
 // 监听store中currentWeek的变化
-watch(() => scheduleStore.currentWeek, (newValue) => {
-  selectedWeek.value = newValue
-})
+watch(
+  () => scheduleStore.currentWeek,
+  (newValue) => {
+    selectedWeek.value = newValue
+  }
+)
 
 // 监听props的变化
-watch(() => props.modelValue, (newValue) => {
-  if (newValue !== scheduleStore.currentWeek) {
-    scheduleStore.setCurrentWeek(newValue)
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue !== scheduleStore.currentWeek) {
+      scheduleStore.setCurrentWeek(newValue)
+    }
   }
-})
+)
 </script>
 
 <style scoped>

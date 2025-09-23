@@ -23,27 +23,15 @@
       </el-form-item>
 
       <el-form-item label="教师姓名" prop="teacher">
-        <el-input
-          v-model="formData.teacher"
-          placeholder="请输入教师姓名"
-          maxlength="30"
-        />
+        <el-input v-model="formData.teacher" placeholder="请输入教师姓名" maxlength="30" />
       </el-form-item>
 
       <el-form-item label="上课地点" prop="location">
-        <el-input
-          v-model="formData.location"
-          placeholder="请输入上课地点"
-          maxlength="30"
-        />
+        <el-input v-model="formData.location" placeholder="请输入上课地点" maxlength="30" />
       </el-form-item>
 
       <el-form-item label="星期" prop="day">
-        <el-select
-          v-model="formData.day"
-          placeholder="请选择星期"
-          style="width: 100%"
-        >
+        <el-select v-model="formData.day" placeholder="请选择星期" style="width: 100%">
           <el-option
             v-for="item in dayOptions"
             :key="item.value"
@@ -54,11 +42,7 @@
       </el-form-item>
 
       <el-form-item label="节次" prop="period">
-        <el-select
-          v-model="formData.period"
-          placeholder="请选择节次"
-          style="width: 100%"
-        >
+        <el-select v-model="formData.period" placeholder="请选择节次" style="width: 100%">
           <el-option
             v-for="item in periodOptions"
             :key="item.value"
@@ -69,14 +53,8 @@
       </el-form-item>
 
       <el-form-item label="周次范围" prop="weeks">
-        <el-input
-          v-model="formData.weeks"
-          placeholder="例如: 1-16 或 1-8,10-16"
-          maxlength="50"
-        />
-        <div class="weeks-help">
-          支持格式：1-16 (连续), 1,3,5 (不连续), 1-8,10-16 (混合)
-        </div>
+        <el-input v-model="formData.weeks" placeholder="例如: 1-16 或 1-8,10-16" maxlength="50" />
+        <div class="weeks-help">支持格式：1-16 (连续), 1,3,5 (不连续), 1-8,10-16 (混合)</div>
       </el-form-item>
     </el-form>
 
@@ -116,8 +94,8 @@ const defaultFormData = {
 
 const formData = reactive({ ...defaultFormData })
 
-const dayOptions = DAYS_OF_WEEK.map(day => ({ label: day, value: day }))
-const periodOptions = PERIODS.map(period => ({ label: period, value: period }))
+const dayOptions = DAYS_OF_WEEK.map((day) => ({ label: day, value: day }))
+const periodOptions = PERIODS.map((period) => ({ label: period, value: period }))
 
 const formRules = {
   course: [{ required: true, message: '请输入课程名称', trigger: 'blur' }],
@@ -150,17 +128,17 @@ const openAddDialog = (day = '', period = '') => {
   isEditMode.value = false
   editingCourseId.value = ''
   resetForm()
-  
+
   if (day) formData.day = day
   if (period) formData.period = period
-  
+
   showDialog.value = true
 }
 
 const openEditDialog = (course) => {
   isEditMode.value = true
   editingCourseId.value = course.id
-  
+
   Object.assign(formData, {
     course: course.course,
     teacher: course.teacher,
@@ -169,7 +147,7 @@ const openEditDialog = (course) => {
     period: course.period,
     weeks: course.weeks
   })
-  
+
   showDialog.value = true
 }
 

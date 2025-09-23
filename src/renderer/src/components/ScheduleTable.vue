@@ -4,50 +4,46 @@
       <el-scrollbar class="table-scrollbar">
         <div class="table-container">
           <table class="schedule-grid">
-          <!-- 表头 -->
-          <thead>
-            <tr>
-              <th class="time-header">节次/星期</th>
-              <th v-for="day in displayDays" :key="day" class="day-header">
-                {{ day }}
-              </th>
-            </tr>
-          </thead>
-          
-          <!-- 表体 -->
-          <tbody>
-            <tr v-for="period in PERIODS" :key="period">
-              <td class="period-cell">
-                <div class="period-info">
-                  <div class="period-number">{{ period }}</div>
-                  <div class="period-time">{{ getPeriodDisplayText(period) }}</div>
-                </div>
-              </td>
-              <td
-                v-for="day in displayDays"
-                :key="`${day}-${period}`"
-                class="course-cell"
-                @click.left.stop="handleCellClick(day, period)"
-                @contextmenu.prevent.stop="handleCellRightClick($event, day, period)"
-              >
-                <CourseCard
-                  v-if="getCourseInSlot(day, period)"
-                  :course="getCourseInSlot(day, period)"
-                  @detail="handleCourseDetail"
-                />
-                <div v-else class="empty-cell">
-                  <el-button
-                    link
-                    class="add-button"
-                    @click.stop="handleAddCourse(day, period)"
-                  >
-                    <el-icon><Plus /></el-icon>
-                    <span>添加课程</span>
-                  </el-button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+            <!-- 表头 -->
+            <thead>
+              <tr>
+                <th class="time-header">节次/星期</th>
+                <th v-for="day in displayDays" :key="day" class="day-header">
+                  {{ day }}
+                </th>
+              </tr>
+            </thead>
+
+            <!-- 表体 -->
+            <tbody>
+              <tr v-for="period in PERIODS" :key="period">
+                <td class="period-cell">
+                  <div class="period-info">
+                    <div class="period-number">{{ period }}</div>
+                    <div class="period-time">{{ getPeriodDisplayText(period) }}</div>
+                  </div>
+                </td>
+                <td
+                  v-for="day in displayDays"
+                  :key="`${day}-${period}`"
+                  class="course-cell"
+                  @click.left.stop="handleCellClick(day, period)"
+                  @contextmenu.prevent.stop="handleCellRightClick($event, day, period)"
+                >
+                  <CourseCard
+                    v-if="getCourseInSlot(day, period)"
+                    :course="getCourseInSlot(day, period)"
+                    @detail="handleCourseDetail"
+                  />
+                  <div v-else class="empty-cell">
+                    <el-button link class="add-button" @click.stop="handleAddCourse(day, period)">
+                      <el-icon><Plus /></el-icon>
+                      <span>添加课程</span>
+                    </el-button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </el-scrollbar>
@@ -80,10 +76,7 @@
     </div>
 
     <!-- 课程详情弹窗 -->
-    <CourseDetailDialog
-      ref="courseDetailDialog"
-      @edit="handleDetailEdit"
-    />
+    <CourseDetailDialog ref="courseDetailDialog" @edit="handleDetailEdit" />
   </div>
 </template>
 
@@ -110,7 +103,7 @@ const isMobile = computed(() => windowWidth.value < 768)
  * @returns {boolean} 该天是否有课程
  */
 const hasCourseOnDay = (day) => {
-  return PERIODS.some(period => {
+  return PERIODS.some((period) => {
     const course = getCourseInSlot(day, period)
     return course !== null
   })
@@ -118,8 +111,8 @@ const hasCourseOnDay = (day) => {
 
 // 检查是否有周末课程
 const hasWeekendCourses = computed(() => {
-  return ['星期六', '星期日'].some(day => {
-    return PERIODS.some(period => {
+  return ['星期六', '星期日'].some((day) => {
+    return PERIODS.some((period) => {
       const course = getCourseInSlot(day, period)
       return course !== null
     })
@@ -129,18 +122,18 @@ const hasWeekendCourses = computed(() => {
 // 根据移动端、周末课程情况和实际课程安排决定显示的星期
 const displayDays = computed(() => {
   // 首先过滤出有课程的天
-  const daysWithCourses = DAYS_OF_WEEK.filter(day => hasCourseOnDay(day))
-  
+  const daysWithCourses = DAYS_OF_WEEK.filter((day) => hasCourseOnDay(day))
+
   // 如果没有任何课程，显示工作日（避免空表格）
   if (daysWithCourses.length === 0) {
     return DAYS_OF_WEEK.slice(0, 5) // 星期一到星期五
   }
-  
+
   // 移动端优化：如果是移动端且没有周末课程，只显示工作日中有课程的天
   if (isMobile.value && !hasWeekendCourses.value) {
-    return daysWithCourses.filter(day => !['星期六', '星期日'].includes(day))
+    return daysWithCourses.filter((day) => !['星期六', '星期日'].includes(day))
   }
-  
+
   // 否则显示所有有课程的天
   return daysWithCourses
 })
@@ -158,13 +151,13 @@ const handleResize = () => {
 const adaptiveStyles = computed(() => {
   const width = windowWidth.value
   const height = windowHeight.value
-  
+
   // 基础配置
   let cellHeight = 90
   let fontSize = 'var(--el-font-size-small)'
   let cardPadding = 'var(--el-card-padding, 8px)'
   let headerPadding = 'var(--el-table-header-padding, 12px 8px)'
-  
+
   // 根据窗口宽度调整
   if (width < 600) {
     // 超小屏幕：增加高度以适应信息显示
@@ -197,14 +190,14 @@ const adaptiveStyles = computed(() => {
     cardPadding = 'var(--el-card-padding, 10px)'
     headerPadding = 'var(--el-table-header-padding, 15px 10px)'
   }
-  
+
   // 根据窗口高度进一步调整
   if (height < 600) {
     cellHeight = Math.max(cellHeight - 10, 70)
   } else if (height > 900) {
     cellHeight += 10
   }
-  
+
   return {
     '--adaptive-cell-height': `${cellHeight}px`,
     '--adaptive-font-size': fontSize,
@@ -279,7 +272,7 @@ const handleContextMenuSelect = (key) => {
   const day = contextMenuDay.value
   const period = contextMenuPeriod.value
   const course = getCourseInSlot(day, period)
-  
+
   switch (key) {
     case 'add':
       handleAddCourse(day, period)
@@ -291,7 +284,7 @@ const handleContextMenuSelect = (key) => {
       if (course) handleDeleteCourse(course)
       break
   }
-  
+
   closeContextMenu()
 }
 
@@ -308,24 +301,22 @@ const handleEditCourse = (course) => {
 }
 
 const handleDeleteCourse = (course) => {
-  ElMessageBox.confirm(
-    `确定要删除课程 "${course.course}" 吗？`,
-    '确认删除',
-    {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  ).then(() => {
-    try {
-      scheduleStore.deleteCourse(course.id)
-      ElMessage.success('课程删除成功')
-    } catch (error) {
-      ElMessage.error(`删除失败: ${error.message}`)
-    }
-  }).catch(() => {
-    // 用户取消删除
+  ElMessageBox.confirm(`确定要删除课程 "${course.course}" 吗？`, '确认删除', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
   })
+    .then(() => {
+      try {
+        scheduleStore.deleteCourse(course.id)
+        ElMessage.success('课程删除成功')
+      } catch (error) {
+        ElMessage.error(`删除失败: ${error.message}`)
+      }
+    })
+    .catch(() => {
+      // 用户取消删除
+    })
 }
 </script>
 
@@ -365,7 +356,11 @@ const handleDeleteCourse = (course) => {
 }
 
 .table-scrollbar :deep(.el-scrollbar__thumb) {
-  background: linear-gradient(135deg, var(--el-color-primary-light-5), var(--el-color-primary-light-3));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-5),
+    var(--el-color-primary-light-3)
+  );
   border-radius: var(--el-border-radius-round);
   transition: all var(--el-transition-duration) var(--el-transition-function-ease-in-out-bezier);
   border: 1px solid var(--el-color-primary-light-8);
@@ -393,13 +388,21 @@ const handleDeleteCourse = (course) => {
 
 /* 暗黑模式下的滚动条优化 */
 .dark .table-scrollbar :deep(.el-scrollbar__thumb) {
-  background: linear-gradient(135deg, var(--el-color-primary-light-7), var(--el-color-primary-light-5));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-7),
+    var(--el-color-primary-light-5)
+  );
   border-color: var(--el-fill-color);
   box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
 }
 
 .dark .table-scrollbar :deep(.el-scrollbar__thumb:hover) {
-  background: linear-gradient(135deg, var(--el-color-primary-light-5), var(--el-color-primary-light-3));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-5),
+    var(--el-color-primary-light-3)
+  );
   border-color: var(--el-color-primary-light-8);
   box-shadow: 0 2px 6px rgba(255, 255, 255, 0.15);
 }
@@ -507,8 +510,6 @@ const handleDeleteCourse = (course) => {
 .course-cell:hover {
   background-color: var(--el-fill-color-extra-light);
 }
-
-
 
 .add-button {
   font-size: var(--el-font-size-small);

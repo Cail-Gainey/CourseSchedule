@@ -1,9 +1,5 @@
 <template>
-  <div 
-    class="course-card"
-    :style="cardStyle"
-    @click="$emit('detail', course)"
-  >
+  <div class="course-card" :style="cardStyle" @click="$emit('detail', course)">
     <div class="course-content">
       <div class="course-name" :title="course.course">
         {{ course.course }}
@@ -12,7 +8,7 @@
         <el-icon><User /></el-icon> {{ course.teacher }}
       </div>
       <div class="course-location" :title="course.location">
-       <el-icon><Location /></el-icon> {{ course.location }}
+        <el-icon><Location /></el-icon> {{ course.location }}
       </div>
     </div>
   </div>
@@ -51,9 +47,6 @@ const cardStyle = computed(() => {
     '--card-hover-bg': color + 'cc' // 80% opacity
   }
 })
-
-
-
 </script>
 
 <style scoped>
@@ -68,7 +61,8 @@ const cardStyle = computed(() => {
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all var(--el-transition-duration, 0.2s) var(--el-transition-function-ease-in-out-bezier);
+  transition: all var(--el-transition-duration, 0.2s)
+    var(--el-transition-function-ease-in-out-bezier);
   box-shadow: var(--el-box-shadow-light);
   border: 1px solid var(--el-border-color-lighter);
   background-color: var(--el-bg-color);
@@ -80,8 +74,6 @@ const cardStyle = computed(() => {
   border-color: var(--el-color-primary-light-7);
   background-color: var(--el-bg-color-page);
 }
-
-
 
 .course-content {
   height: 100%;
@@ -104,7 +96,9 @@ const cardStyle = computed(() => {
 :global(.dark) .course-name {
   color: #ffffff;
   font-weight: 800;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.3px;
 }
 
@@ -129,7 +123,9 @@ const cardStyle = computed(() => {
 :global(.dark) .course-weeks {
   color: #f3f4f6;
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 1px rgba(0, 0, 0, 0.7);
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    0 1px 1px rgba(0, 0, 0, 0.7);
   letter-spacing: 0.2px;
 }
 
@@ -169,7 +165,7 @@ const cardStyle = computed(() => {
   .course-time .el-icon {
     display: none;
   }
-  
+
   .course-teacher,
   .course-location,
   .course-time {

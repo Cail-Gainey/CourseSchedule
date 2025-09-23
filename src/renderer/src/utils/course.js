@@ -57,24 +57,24 @@ export function getPeriodTimeText(period, periodTimes) {
   if (!periodTimes || !Array.isArray(periodTimes)) {
     return period // 如果没有时间配置，返回原节次
   }
-  
+
   // 从节次字符串中提取数字 (如 "第1节" -> 1)
   const periodMatch = period.match(/第(\d+)节/)
   if (!periodMatch) {
     return period
   }
-  
+
   const periodIndex = parseInt(periodMatch[1]) - 1 // 转换为数组索引
-  
+
   if (periodIndex < 0 || periodIndex >= periodTimes.length) {
     return period // 如果索引超出范围，返回原节次
   }
-  
+
   const timeConfig = periodTimes[periodIndex]
   if (!timeConfig || !timeConfig.startTime || !timeConfig.endTime) {
     return period
   }
-  
+
   return `${timeConfig.startTime}-${timeConfig.endTime}`
 }
 
@@ -115,15 +115,17 @@ export function isCourseInWeekRange(course, selectedWeeks) {
 
   // 解析课程的周次范围
   const courseWeeks = parseWeeksRange(course.weeks)
-  
+
   // 解析选中的周次
-  const selectedWeekNumbers = selectedWeeks.map(week => {
-    const match = week.match(/第(\d+)周/)
-    return match ? parseInt(match[1]) : 0
-  }).filter(num => num > 0)
+  const selectedWeekNumbers = selectedWeeks
+    .map((week) => {
+      const match = week.match(/第(\d+)周/)
+      return match ? parseInt(match[1]) : 0
+    })
+    .filter((num) => num > 0)
 
   // 检查是否有交集
-  return courseWeeks.some(week => selectedWeekNumbers.includes(week))
+  return courseWeeks.some((week) => selectedWeekNumbers.includes(week))
 }
 
 /**
@@ -137,10 +139,10 @@ function parseWeeksRange(weeks) {
   const result = []
   const parts = weeks.split(',')
 
-  parts.forEach(part => {
+  parts.forEach((part) => {
     part = part.trim()
     if (part.includes('-')) {
-      const [start, end] = part.split('-').map(num => parseInt(num.trim()))
+      const [start, end] = part.split('-').map((num) => parseInt(num.trim()))
       for (let i = start; i <= end; i++) {
         result.push(i)
       }

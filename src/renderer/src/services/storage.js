@@ -9,7 +9,7 @@ class StorageService {
     this.storageKey = 'courseScheduleData'
     this.settingsKey = 'courseScheduleSettings'
     this.autoSaveDelay = 1000 // 1秒防抖延迟
-    
+
     // 创建防抖的自动保存函数
     this.debouncedSave = debounce(this._saveToStorage.bind(this), this.autoSaveDelay)
   }
@@ -21,15 +21,12 @@ class StorageService {
   init() {
     try {
       // 更安全的环境检测
-      this.isElectron = typeof window !== 'undefined' && 
-                       window.electronAPI && 
-                       typeof window.electronAPI.storage === 'object'
-      
-      if (this.isElectron) {
-        console.log('使用 Electron Store 进行数据存储')
-      } else {
-        console.log('使用 localStorage 进行数据存储')
-      }
+      this.isElectron =
+        typeof window !== 'undefined' &&
+        window.electronAPI &&
+        typeof window.electronAPI.storage === 'object'
+
+      // 环境检测完成，选择合适的存储方式
     } catch (error) {
       console.warn('存储服务初始化时检测环境失败，使用 localStorage:', error)
       this.isElectron = false
@@ -53,7 +50,6 @@ class StorageService {
       }
 
       await this._saveToStorage(this.storageKey, dataToSave)
-      console.log('课程表数据保存成功')
       return true
     } catch (error) {
       console.error('保存课程表数据失败:', error)
@@ -68,15 +64,13 @@ class StorageService {
   async loadScheduleData() {
     try {
       const data = await this._loadFromStorage(this.storageKey)
-      
+
       if (!data) {
-        console.log('未找到保存的课程表数据，返回空数据')
         return this._getDefaultScheduleData()
       }
 
       // 数据迁移和验证
       const validatedData = this._validateAndMigrateData(data)
-      console.log('课程表数据加载成功')
       return validatedData
     } catch (error) {
       console.error('加载课程表数据失败:', error)
@@ -91,7 +85,7 @@ class StorageService {
   async saveSettings(settings) {
     try {
       const settingsToSave = {
-        theme: settings.theme || 'light',
+        theme: settings.theme || 'auto',
         language: settings.language || 'zh-CN',
         autoSave: settings.autoSave !== false,
         firstWeekStart: settings.firstWeekStart || '',
@@ -100,7 +94,6 @@ class StorageService {
       }
 
       await this._saveToStorage(this.settingsKey, settingsToSave)
-      console.log('应用设置保存成功')
       return true
     } catch (error) {
       console.error('保存应用设置失败:', error)
@@ -115,7 +108,7 @@ class StorageService {
   async loadSettings() {
     try {
       const settings = await this._loadFromStorage(this.settingsKey)
-      
+
       if (!settings) {
         return this._getDefaultSettings()
       }
@@ -159,17 +152,14 @@ class StorageService {
         localStorage.removeItem(this.storageKey)
         localStorage.removeItem(this.settingsKey)
       }
-      console.log('所有数据已清除')
       return true
     } catch (error) {
       console.error('清除数据失败:', error)
       // 如果Electron清除失败，尝试使用localStorage作为备用
       if (this.isElectron) {
-        console.warn('Electron清除失败，尝试使用localStorage作为备用')
         try {
           localStorage.removeItem(this.storageKey)
           localStorage.removeItem(this.settingsKey)
-          console.log('使用localStorage备用清除成功')
           return true
         } catch (fallbackError) {
           console.error('localStorage备用清除也失败:', fallbackError)
@@ -194,11 +184,8 @@ class StorageService {
         localStorage.setItem(key, JSON.stringify(plainData))
       }
     } catch (error) {
-      console.error('Error in _saveToStorage:', error)
-      console.error('Data that failed to save:', data)
       // 如果Electron存储失败，尝试使用localStorage作为备用
       if (this.isElectron) {
-        console.warn('Electron存储失败，尝试使用localStorage作为备用')
         try {
           localStorage.setItem(key, JSON.stringify(plainData))
         } catch (fallbackError) {
@@ -224,10 +211,8 @@ class StorageService {
         return data ? JSON.parse(data) : null
       }
     } catch (error) {
-      console.error('Error in _loadFromStorage:', error)
       // 如果Electron存储失败，尝试使用localStorage作为备用
       if (this.isElectron) {
-        console.warn('Electron存储失败，尝试使用localStorage作为备用')
         try {
           const data = localStorage.getItem(key)
           return data ? JSON.parse(data) : null
@@ -264,11 +249,13 @@ class StorageService {
    */
   _getDefaultSettings() {
     return {
-      theme: 'light',
+      theme: 'auto',
       language: 'zh-CN',
       autoSave: true,
       firstWeekStart: '',
       periodTimes: this._getDefaultPeriodTimes(),
+      notificationEnabled: false,
+      notificationMinutes: 10,
       lastUpdated: new Date()
     }
   }
@@ -304,18 +291,22 @@ class StorageService {
       metadata: {
         semester: data.metadata?.semester || '',
         year: data.metadata?.year || new Date().getFullYear().toString(),
-        lastModified: data.metadata?.lastModified ? new Date(data.metadata.lastModified) : new Date(),
+        lastModified: data.metadata?.lastModified
+          ? new Date(data.metadata.lastModified)
+          : new Date(),
         version: data.metadata?.version || '1.0.0'
       }
     }
 
     // 验证每个课程的数据结构
-    validatedData.courses = validatedData.courses.filter(course => {
-      return course && 
-             typeof course.id === 'string' &&
-             typeof course.day === 'string' &&
-             typeof course.period === 'string' &&
-             typeof course.course === 'string'
+    validatedData.courses = validatedData.courses.filter((course) => {
+      return (
+        course &&
+        typeof course.id === 'string' &&
+        typeof course.day === 'string' &&
+        typeof course.period === 'string' &&
+        typeof course.course === 'string'
+      )
     })
 
     return validatedData

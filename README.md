@@ -1,4 +1,3 @@
-
 # 课程表管理系统 (重庆对外经贸学院)
 
 一个基于 Vue 3 + Electron 的现代化课程表管理应用，支持桌面端和移动端多平台部署。
@@ -12,7 +11,6 @@
 - 📱 **多平台支持** - Windows、macOS、Linux 桌面端 + Android、iOS 移动端
 - ⚙️ **个性化设置** - 自定义课程时间、界面配置等
 - 🔄 **数据持久化** - 本地数据存储，支持数据备份
-
 
 ## 🚀 快速开始
 
@@ -94,6 +92,7 @@ pnpm build:ios
 ### Excel 导入格式
 
 支持标准的课程表 Excel 格式，包含以下列：
+
 - 课程名称
 - 教师
 - 地点
@@ -104,20 +103,24 @@ pnpm build:ios
 ## 🛠️ 技术栈
 
 ### 前端框架
+
 - **Vue 3** - 渐进式 JavaScript 框架
 - **Element Plus** - Vue 3 组件库
 - **Pinia** - Vue 状态管理
 - **VueUse** - Vue 组合式 API 工具集
 
 ### 桌面端
+
 - **Electron** - 跨平台桌面应用框架
 - **Electron Vite** - 基于 Vite 的 Electron 构建工具
 - **Electron Builder** - Electron 应用打包工具
 
 ### 移动端
+
 - **Capacitor** - 跨平台移动应用开发框架
 
 ### 工具库
+
 - **XLSX** - Excel 文件处理
 - **Electron Store** - 数据持久化存储
 

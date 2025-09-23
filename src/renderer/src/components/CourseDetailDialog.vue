@@ -32,12 +32,8 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">关闭</el-button>
-        <el-button type="primary" @click="handleEdit" :icon="Edit">
-          编辑
-        </el-button>
-        <el-button type="danger" @click="handleDelete" :icon="Delete">
-          删除
-        </el-button>
+        <el-button type="primary" @click="handleEdit" :icon="Edit"> 编辑 </el-button>
+        <el-button type="danger" @click="handleDelete" :icon="Delete"> 删除 </el-button>
       </div>
     </template>
   </el-dialog>
@@ -79,25 +75,23 @@ const handleEdit = () => {
 }
 
 const handleDelete = () => {
-  ElMessageBox.confirm(
-    `确定要删除课程 "${courseData.course}" 吗？`,
-    '确认删除',
-    {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  ).then(() => {
-    try {
-      scheduleStore.deleteCourse(courseData.id)
-      ElMessage.success('课程删除成功')
-      showDialog.value = false
-    } catch (error) {
-      ElMessage.error(`删除失败: ${error.message}`)
-    }
-  }).catch(() => {
-    // 用户取消删除
+  ElMessageBox.confirm(`确定要删除课程 "${courseData.course}" 吗？`, '确认删除', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
   })
+    .then(() => {
+      try {
+        scheduleStore.deleteCourse(courseData.id)
+        ElMessage.success('课程删除成功')
+        showDialog.value = false
+      } catch (error) {
+        ElMessage.error(`删除失败: ${error.message}`)
+      }
+    })
+    .catch(() => {
+      // 用户取消删除
+    })
 }
 
 defineExpose({

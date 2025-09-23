@@ -81,7 +81,7 @@ export function validateWeeksFormat(weeks) {
  * @returns {Object} 冲突检查结果
  */
 export function validateTimeConflict(newCourse, existingCourses, excludeId = null) {
-  const conflicts = existingCourses.filter(course => {
+  const conflicts = existingCourses.filter((course) => {
     if (excludeId && course.id === excludeId) {
       return false
     }
@@ -111,7 +111,7 @@ export function hasWeekOverlap(weeks1, weeks2) {
   const range1 = parseWeeksRange(weeks1)
   const range2 = parseWeeksRange(weeks2)
 
-  return range1.some(week => range2.includes(week))
+  return range1.some((week) => range2.includes(week))
 }
 
 /**
@@ -125,10 +125,10 @@ export function parseWeeksRange(weeks) {
   const result = []
   const parts = weeks.split(',')
 
-  parts.forEach(part => {
+  parts.forEach((part) => {
     part = part.trim()
     if (part.includes('-')) {
-      const [start, end] = part.split('-').map(num => parseInt(num.trim()))
+      const [start, end] = part.split('-').map((num) => parseInt(num.trim()))
       for (let i = start; i <= end; i++) {
         result.push(i)
       }

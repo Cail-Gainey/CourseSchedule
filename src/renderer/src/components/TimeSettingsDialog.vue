@@ -8,18 +8,13 @@
     destroy-on-close
     class="time-settings-dialog"
   >
-    <el-form
-      :model="formData"
-      label-width="80px"
-      label-position="right"
-      class="time-form"
-    >
+    <el-form :model="formData" label-width="80px" label-position="right" class="time-form">
       <div class="setting-section">
         <div class="section-title">
           <el-icon><Clock /></el-icon>
           <span>课程时间安排</span>
         </div>
-        
+
         <el-form-item>
           <div class="time-settings">
             <div class="time-settings-header">
@@ -27,9 +22,9 @@
               <span class="time-header">开始时间</span>
               <span class="time-header">结束时间</span>
             </div>
-            <div 
-              v-for="(period, index) in formData.periodTimes" 
-              :key="index" 
+            <div
+              v-for="(period, index) in formData.periodTimes"
+              :key="index"
               class="time-setting-row"
             >
               <span class="period-label">第{{ index + 1 }}节</span>
@@ -50,9 +45,7 @@
                 size="default"
               />
             </div>
-            <div class="setting-help">
-              设置每节课的开始和结束时间，用于在课程表中显示具体时间
-            </div>
+            <div class="setting-help">设置每节课的开始和结束时间，用于在课程表中显示具体时间</div>
           </div>
         </el-form-item>
       </div>
@@ -95,11 +88,15 @@ const formData = reactive({
 })
 
 // 监听设置变化，同步到表单
-watch(() => scheduleStore.settings, (newSettings) => {
-  if (newSettings && newSettings.periodTimes) {
-    formData.periodTimes = [...newSettings.periodTimes]
-  }
-}, { immediate: true, deep: true })
+watch(
+  () => scheduleStore.settings,
+  (newSettings) => {
+    if (newSettings && newSettings.periodTimes) {
+      formData.periodTimes = [...newSettings.periodTimes]
+    }
+  },
+  { immediate: true, deep: true }
+)
 
 const openDialog = () => {
   // 加载当前设置
@@ -122,22 +119,22 @@ const handleSave = async () => {
         ElMessage.warning(`请设置第${i + 1}节课的时间`)
         return
       }
-      
+
       // 验证开始时间小于结束时间
       if (period.startTime >= period.endTime) {
         ElMessage.warning(`第${i + 1}节课的开始时间必须小于结束时间`)
         return
       }
     }
-    
+
     // 保存到store
     const newSettings = {
       ...scheduleStore.settings,
       periodTimes: [...formData.periodTimes]
     }
-    
+
     await scheduleStore.saveSettings(newSettings)
-    
+
     ElMessage.success('课程时间设置已保存')
     showDialog.value = false
   } catch (error) {
@@ -266,13 +263,13 @@ defineExpose({
   .time-form {
     max-height: none;
   }
-  
+
   .time-settings-header,
   .time-setting-row {
     grid-template-columns: 70px 1fr 1fr;
     gap: 12px;
   }
-  
+
   .period-label {
     font-size: 13px;
     font-weight: 500;
@@ -339,13 +336,13 @@ defineExpose({
     font-size: 12px;
     margin-bottom: 12px;
   }
-  
+
   .time-settings-header,
   .time-setting-row {
     grid-template-columns: 60px 1fr 1fr;
     gap: 8px;
   }
-  
+
   .period-label {
     font-size: 12px;
   }

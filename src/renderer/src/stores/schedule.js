@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { 
-  createCourse, 
-  getTimeSlotKey, 
+import {
+  createCourse,
+  getTimeSlotKey,
   isCourseInWeekRange,
   validateCourse,
   validateTimeConflict,
@@ -17,20 +17,24 @@ export const useScheduleStore = defineStore('schedule', () => {
   const courses = ref([])
   const selectedWeeks = ref([])
   const currentWeek = ref(1)
-  const currentTheme = ref('light')
+  const currentTheme = ref('auto')
   const isLoading = ref(false)
+  const searchFilteredCourses = ref([]) // 搜索过滤后的课程
+  const isSearchActive = ref(false) // 是否正在搜索
   const metadata = ref({
     semester: '',
     year: new Date().getFullYear().toString(),
     lastModified: new Date()
   })
-  
+
   // Settings state
   const settings = ref({
-    theme: 'light',
+    theme: 'auto',
     autoSave: true,
     firstWeekStart: '',
     periodTimes: [],
+    notificationEnabled: false,
+    notificationMinutes: 10,
     lastUpdated: new Date()
   })
 
@@ -38,36 +42,36 @@ export const useScheduleStore = defineStore('schedule', () => {
   watch(
     [courses, currentTheme, metadata, settings],
     () => {
-      if (courses.value.length > 0 || currentTheme.value !== 'light') {
+      if (courses.value.length > 0 || (currentTheme.value !== 'auto' && currentTheme.value !== 'light')) {
         autoSave()
       }
-      if (settings.value.autoSave) {
-        autoSaveSettings()
-      }
+      // 始终启用自动保存设置
+      autoSaveSettings()
     },
     { deep: true }
   )
 
   // Getters
   const filteredCourses = computed(() => {
+    // 如果正在搜索，使用搜索过滤后的课程
+    let baseCourses = isSearchActive.value ? searchFilteredCourses.value : courses.value
+    
     // 如果设置了当前周数，则按当前周数过滤
     if (currentWeek.value > 0) {
-      return courses.value.filter(course => 
+      return baseCourses.filter((course) =>
         isCourseInWeekRange(course, [`第${currentWeek.value}周`])
       )
     }
     // 否则使用selectedWeeks过滤
     if (selectedWeeks.value.length === 0) {
-      return courses.value
+      return baseCourses
     }
-    return courses.value.filter(course => 
-      isCourseInWeekRange(course, selectedWeeks.value)
-    )
+    return baseCourses.filter((course) => isCourseInWeekRange(course, selectedWeeks.value))
   })
 
   const coursesByTimeSlot = computed(() => {
     const map = new Map()
-    filteredCourses.value.forEach(course => {
+    filteredCourses.value.forEach((course) => {
       const key = getTimeSlotKey(course.day, course.period)
       if (!map.has(key)) {
         map.set(key, [])
@@ -79,19 +83,19 @@ export const useScheduleStore = defineStore('schedule', () => {
 
   const availableWeeks = computed(() => {
     const weekSet = new Set()
-    courses.value.forEach(course => {
+    courses.value.forEach((course) => {
       const weeks = parseWeeksRange(course.weeks)
-      weeks.forEach(week => weekSet.add(week))
+      weeks.forEach((week) => weekSet.add(week))
     })
-    
+
     const sortedWeeks = Array.from(weekSet).sort((a, b) => a - b)
-    return sortedWeeks.map(week => `第${week}周`)
+    return sortedWeeks.map((week) => `第${week}周`)
   })
 
   // Actions
   const addCourse = (courseData) => {
     const course = createCourse(courseData)
-    
+
     // 验证课程数据
     const validation = validateCourse(course)
     if (!validation.isValid) {
@@ -110,13 +114,13 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   const updateCourse = (id, updates) => {
-    const index = courses.value.findIndex(course => course.id === id)
+    const index = courses.value.findIndex((course) => course.id === id)
     if (index === -1) {
       throw new Error('课程不存在')
     }
 
     const updatedCourse = { ...courses.value[index], ...updates }
-    
+
     // 验证更新后的课程数据
     const validation = validateCourse(updatedCourse)
     if (!validation.isValid) {
@@ -135,7 +139,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   const deleteCourse = (id) => {
-    const index = courses.value.findIndex(course => course.id === id)
+    const index = courses.value.findIndex((course) => course.id === id)
     if (index !== -1) {
       courses.value.splice(index, 1)
       metadata.value.lastModified = new Date()
@@ -148,7 +152,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     try {
       isLoading.value = true
       const importedCourses = await ExcelService.importExcel()
-      
+
       if (importedCourses && importedCourses.length > 0) {
         // 清空现有课程或合并
         courses.value = importedCourses
@@ -156,7 +160,7 @@ export const useScheduleStore = defineStore('schedule', () => {
         console.log(`成功导入 ${importedCourses.length} 门课程`)
         return importedCourses.length
       }
-      
+
       return 0
     } catch (error) {
       console.error('Excel 导入失败:', error)
@@ -166,13 +170,11 @@ export const useScheduleStore = defineStore('schedule', () => {
     }
   }
 
-
-
   const loadFromStorage = async () => {
     try {
       isLoading.value = true
       const data = await storageService.loadScheduleData()
-      
+
       if (data && data.courses) {
         courses.value = data.courses
         metadata.value = data.metadata || metadata.value
@@ -184,7 +186,6 @@ export const useScheduleStore = defineStore('schedule', () => {
         currentTheme.value = settings.theme || 'light'
       }
 
-      console.log('数据加载成功')
     } catch (error) {
       console.error('加载数据失败:', error)
       throw error
@@ -204,13 +205,12 @@ export const useScheduleStore = defineStore('schedule', () => {
       }
 
       await storageService.saveScheduleData(scheduleData)
-      
+
       // 保存设置
       await storageService.saveSettings({
         theme: currentTheme.value
       })
 
-      console.log('数据保存成功')
     } catch (error) {
       console.error('保存数据失败:', error)
       throw error
@@ -233,11 +233,10 @@ export const useScheduleStore = defineStore('schedule', () => {
       const loadedSettings = await storageService.loadSettings()
       settings.value = loadedSettings
       currentTheme.value = loadedSettings.theme
-      
+
       // 自动计算并设置当前周数
       initializeCurrentWeek()
-      
-      console.log('设置加载成功')
+
     } catch (error) {
       console.error('加载设置失败:', error)
       throw error
@@ -248,7 +247,7 @@ export const useScheduleStore = defineStore('schedule', () => {
     if (settings.value.firstWeekStart) {
       const calculatedWeek = calculateCurrentWeek(settings.value.firstWeekStart)
       currentWeek.value = calculatedWeek
-      console.log(`根据第一周开始时间 ${settings.value.firstWeekStart} 自动计算当前周数: 第${calculatedWeek}周`)
+
     }
   }
 
@@ -257,13 +256,12 @@ export const useScheduleStore = defineStore('schedule', () => {
       await storageService.saveSettings(newSettings)
       settings.value = { ...newSettings, lastUpdated: new Date() }
       currentTheme.value = newSettings.theme
-      
+
       // 如果第一周开始时间发生变化，重新计算当前周数
       if (newSettings.firstWeekStart) {
         initializeCurrentWeek()
       }
-      
-      console.log('设置保存成功')
+
     } catch (error) {
       console.error('保存设置失败:', error)
       throw error
@@ -280,20 +278,21 @@ export const useScheduleStore = defineStore('schedule', () => {
       courses.value = []
       selectedWeeks.value = []
       currentWeek.value = 1
-      currentTheme.value = 'light'
+      currentTheme.value = 'auto'
       metadata.value = {
         semester: '',
         year: new Date().getFullYear().toString(),
         lastModified: new Date()
       }
       settings.value = {
-        theme: 'light',
+        theme: 'auto',
         autoSave: true,
         firstWeekStart: '',
         periodTimes: [],
+        notificationEnabled: false,
+        notificationMinutes: 10,
         lastUpdated: new Date()
       }
-      console.log('所有数据已清除')
     } catch (error) {
       console.error('清除数据失败:', error)
       throw error
@@ -302,6 +301,23 @@ export const useScheduleStore = defineStore('schedule', () => {
 
   const setCurrentWeek = (week) => {
     currentWeek.value = week
+  }
+
+  /**
+   * 设置搜索过滤结果
+   * @param {Array} searchResults - 搜索结果课程数组
+   */
+  const setSearchResults = (searchResults) => {
+    searchFilteredCourses.value = searchResults
+    isSearchActive.value = searchResults.length < courses.value.length || searchResults.length === 0
+  }
+
+  /**
+   * 清除搜索过滤
+   */
+  const clearSearch = () => {
+    searchFilteredCourses.value = []
+    isSearchActive.value = false
   }
 
   return {
@@ -313,6 +329,8 @@ export const useScheduleStore = defineStore('schedule', () => {
     isLoading,
     metadata,
     settings,
+    searchFilteredCourses,
+    isSearchActive,
     // Getters
     filteredCourses,
     coursesByTimeSlot,
@@ -330,6 +348,8 @@ export const useScheduleStore = defineStore('schedule', () => {
     autoSaveSettings,
     clearAllData,
     setCurrentWeek,
-    initializeCurrentWeek
+    initializeCurrentWeek,
+    setSearchResults,
+    clearSearch
   }
 })

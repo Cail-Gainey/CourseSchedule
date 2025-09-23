@@ -4,9 +4,11 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({
-      exclude: ['electron-store']
-    })]
+    plugins: [
+      externalizeDepsPlugin({
+        exclude: ['electron-store']
+      })
+    ]
   },
   preload: {
     plugins: [externalizeDepsPlugin()]

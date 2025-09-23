@@ -16,28 +16,38 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="import-excel" :icon="Upload">导入 Excel</el-dropdown-item>
-                    <el-dropdown-item command="generate-sample" :icon="Download">生成示例数据</el-dropdown-item>
+                    <el-dropdown-item command="import-excel" :icon="Upload"
+                      >导入 Excel</el-dropdown-item
+                    >
+                    <el-dropdown-item command="generate-sample" :icon="Download"
+                      >生成示例数据</el-dropdown-item
+                    >
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-
             </div>
-            
+
             <el-divider direction="vertical" />
-            
+
+            <div class="action-group search-group">
+              <CourseSearch @search-results="handleSearchResults" />
+            </div>
+
+            <el-divider direction="vertical" />
+
             <div class="action-group">
               <WeekSelector />
             </div>
-            
+
             <el-divider direction="vertical" />
-            
+
             <div class="action-group">
               <el-button @click="handleRefresh" :icon="Refresh" circle title="刷新" />
               <el-button @click="handleTimeSettings" :icon="Clock" circle title="课程时间设置" />
               <el-button @click="handleSettings" :icon="Setting" circle title="设置" />
               <div class="theme-toggle">
                 <el-switch
+                  v-if="scheduleStore.currentTheme !== 'auto'"
                   v-model="isDark"
                   inline-prompt
                   :active-icon="MoonIcon"
@@ -69,20 +79,46 @@
 </template>
 
 <script setup>
-import { ref, provide, watch } from 'vue'
+import { ref, provide, watch, onMounted, onUnmounted } from 'vue'
 import { useScheduleStore } from '../stores/schedule'
+import { notificationManager } from '../services/notificationManager.js'
+import { notificationService } from '../services/notification.js'
 import ScheduleTable from './ScheduleTable.vue'
 import WeekSelector from './WeekSelector.vue'
 import WeekNavigation from './WeekNavigation.vue'
 import CourseEditDialog from './CourseEditDialog.vue'
 import SettingsDialog from './SettingsDialog.vue'
 import TimeSettingsDialog from './TimeSettingsDialog.vue'
-import { ElConfigProvider, ElContainer, ElHeader, ElMain, ElButton, ElIcon, ElSwitch, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDivider, ElMessage, ElMessageBox } from 'element-plus'
-import { Moon as MoonIcon, Sunny as SunIcon, Upload, Plus, Refresh, Setting, ArrowDown, Clock, Download } from '@element-plus/icons-vue'
+import CourseSearch from './CourseSearch.vue'
+import {
+  ElConfigProvider,
+  ElContainer,
+  ElHeader,
+  ElMain,
+  ElButton,
+  ElIcon,
+  ElSwitch,
+  ElDropdown,
+  ElDropdownMenu,
+  ElDropdownItem,
+  ElDivider,
+  ElMessage,
+  ElMessageBox
+} from 'element-plus'
+import {
+  Moon as MoonIcon,
+  Sunny as SunIcon,
+  Upload,
+  Plus,
+  Refresh,
+  Setting,
+  ArrowDown,
+  Clock,
+  Download
+} from '@element-plus/icons-vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { validateCourse } from '../utils/index.js'
 import ExcelService from '../services/excel.js'
-
 
 const scheduleStore = useScheduleStore()
 
@@ -95,46 +131,107 @@ const timeSettingsDialogRef = ref(null)
 provide('courseEditDialog', courseEditDialogRef)
 provide('settingsDialog', settingsDialogRef)
 
-// 暗黑模式
-const isDark = ref(scheduleStore.currentTheme === 'dark')
+// 主题相关状态
+const isDark = ref(false)
+const systemPrefersDark = ref(false)
 
-const handleThemeToggle = (value) => {
-  console.log('Theme toggle triggered:', value)
-  const newTheme = value ? 'dark' : 'light'
-  scheduleStore.currentTheme = newTheme
+// 检测系统主题偏好
+const updateSystemTheme = () => {
+  systemPrefersDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+// 应用主题
+const applyTheme = (theme) => {
+  let shouldBeDark = false
   
-  // 直接操作DOM类名
-  if (value) {
+  if (theme === 'auto') {
+    shouldBeDark = systemPrefersDark.value
+  } else {
+    shouldBeDark = theme === 'dark'
+  }
+  
+  isDark.value = shouldBeDark
+  
+  if (shouldBeDark) {
     document.documentElement.classList.add('dark')
   } else {
     document.documentElement.classList.remove('dark')
   }
 }
 
-// 初始化主题
-if (scheduleStore.currentTheme === 'dark') {
-  document.documentElement.classList.add('dark')
-} else {
-  document.documentElement.classList.remove('dark')
+const handleThemeToggle = (value) => {
+  console.log('Theme toggle triggered:', value)
+  const newTheme = value ? 'dark' : 'light'
+  scheduleStore.currentTheme = newTheme
+  applyTheme(newTheme)
 }
 
-// 同步 Pinia store 中的主题状态
-watch(() => scheduleStore.currentTheme, (newTheme) => {
-  const shouldBeDark = newTheme === 'dark'
-  if (shouldBeDark !== isDark.value) {
-    isDark.value = shouldBeDark
-    if (shouldBeDark) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+// 监听系统主题变化
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+mediaQuery.addEventListener('change', () => {
+  updateSystemTheme()
+  if (scheduleStore.currentTheme === 'auto') {
+    applyTheme('auto')
   }
 })
 
+// 初始化系统主题检测
+updateSystemTheme()
+
+// 初始化主题
+applyTheme(scheduleStore.currentTheme)
+
+// 同步 Pinia store 中的主题状态
+watch(
+  () => scheduleStore.currentTheme,
+  (newTheme) => {
+    applyTheme(newTheme)
+  }
+)
 
 // 初始化加载数据和设置
 scheduleStore.loadFromStorage()
 scheduleStore.loadSettings()
+
+// 组件挂载时初始化通知管理器
+onMounted(async () => {
+  try {
+    await notificationManager.initialize(scheduleStore)
+  } catch (error) {
+    console.error('通知管理器初始化失败:', error)
+  }
+})
+
+// 组件卸载时清理通知管理器
+onUnmounted(() => {
+  notificationManager.destroy()
+})
+
+// 监听课程数据变化，更新通知
+watch(
+  () => scheduleStore.courses,
+  () => {
+    notificationManager.onCoursesChanged()
+  },
+  { deep: true }
+)
+
+// 监听设置变化，更新通知
+watch(
+  () => scheduleStore.settings,
+  () => {
+    notificationManager.onSettingsChanged()
+  },
+  { deep: true }
+)
+
+// 监听当前周次变化，更新通知
+watch(
+  () => scheduleStore.currentWeek,
+  () => {
+    notificationManager.onWeekChanged()
+  }
+)
 
 // 从 Sidebar.vue 移动过来的逻辑
 const handleImportCommand = async (command) => {
@@ -150,12 +247,12 @@ const handleImportExcel = async () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.xlsx,.xls'
-    
+
     input.onchange = async (event) => {
       try {
         const file = event.target.files[0]
         if (!file) return
-        
+
         console.log('=== Excel导入开始 ===')
         console.log('文件信息:', {
           name: file.name,
@@ -163,31 +260,31 @@ const handleImportExcel = async () => {
           type: file.type,
           lastModified: new Date(file.lastModified)
         })
-        
+
         // 显示加载提示
         const loadingMessage = ElMessage({
           message: '正在解析Excel文件，请稍候...',
           type: 'info',
           duration: 0
         })
-        
+
         try {
           const courses = await ExcelService.importExcel(file)
           loadingMessage.close()
-          
+
           console.log('Excel解析完成，课程数量:', courses ? courses.length : 0)
           console.log('解析结果预览:', courses ? courses.slice(0, 3) : [])
-          
+
           if (courses && courses.length > 0) {
             console.log('=== 开始导入课程到存储 ===')
-            
+
             await ElMessageBox.confirm(
               `即将导入 ${courses.length} 门课程，这将覆盖现有数据。是否继续？`,
               '确认导入',
               {
                 confirmButtonText: '继续',
                 cancelButtonText: '取消',
-                type: 'warning',
+                type: 'warning'
               }
             )
 
@@ -196,7 +293,7 @@ const handleImportExcel = async () => {
             let successCount = 0
             let failedCount = 0
             const failedCourses = []
-            
+
             courses.forEach((course, index) => {
               try {
                 console.log(`添加第${index + 1}门课程:`, course)
@@ -215,22 +312,23 @@ const handleImportExcel = async () => {
                 failedCount++
               }
             })
-            
+
             // 更新元数据
             scheduleStore.metadata.lastModified = new Date()
-            
+
             console.log('=== 导入完成 ===')
             console.log(`成功: ${successCount}, 失败: ${failedCount}`)
             if (failedCourses.length > 0) {
               console.log('失败的课程详情:', failedCourses)
             }
-            
+
             if (successCount > 0) {
-              const statusMsg = failedCount > 0 
-                ? `成功导入 ${successCount} 门课程，跳过 ${failedCount} 门无效课程`
-                : `成功导入 ${successCount} 门课程`
+              const statusMsg =
+                failedCount > 0
+                  ? `成功导入 ${successCount} 门课程，跳过 ${failedCount} 门无效课程`
+                  : `成功导入 ${successCount} 门课程`
               ElMessage.success(statusMsg)
-              
+
               if (failedCount > 0) {
                 console.warn('部分课程导入失败，详细信息请查看控制台')
               }
@@ -240,7 +338,9 @@ const handleImportExcel = async () => {
             }
           } else {
             console.warn('未解析到任何课程数据')
-            ElMessage.warning(`成功解析但未找到有效课程信息。\n\n请检查：\n1. Excel文件包含正确的表头（星期一、周一等）\n2. 课程单元格包含课程名称\n3. 文件不为空白或纯数字内容\n\n详细解析过程请查看浏览器控制台（F12）`)
+            ElMessage.warning(
+              `成功解析但未找到有效课程信息。\n\n请检查：\n1. Excel文件包含正确的表头（星期一、周一等）\n2. 课程单元格包含课程名称\n3. 文件不为空白或纯数字内容\n\n详细解析过程请查看浏览器控制台（F12）`
+            )
           }
         } catch (parseError) {
           loadingMessage.close()
@@ -251,7 +351,7 @@ const handleImportExcel = async () => {
           console.error('=== Excel导入失败 ===')
           console.error('错误详情:', error)
           console.error('错误堆栈:', error.stack)
-          
+
           ElMessage.error(`解析失败: ${error.message}\n\n详细错误信息请查看浏览器控制台（F12）`)
         }
       }
@@ -266,6 +366,20 @@ const handleImportExcel = async () => {
 const handleAddCourse = () => {
   if (courseEditDialogRef.value) {
     courseEditDialogRef.value.openAddDialog()
+  }
+}
+
+/**
+ * 处理搜索结果
+ * @param {Array} searchResults - 搜索结果课程数组
+ */
+const handleSearchResults = (searchResults) => {
+  if (searchResults.length === scheduleStore.courses.length) {
+    // 如果搜索结果包含所有课程，清除搜索过滤
+    scheduleStore.clearSearch()
+  } else {
+    // 设置搜索过滤结果
+    scheduleStore.setSearchResults(searchResults)
   }
 }
 
@@ -299,13 +413,6 @@ const handleGenerateSample = async () => {
     ElMessage.error(`生成示例文件失败: ${error.message}`)
   }
 }
- 
-
-
-
-
-
-
 </script>
 
 <style scoped>
@@ -357,8 +464,37 @@ const handleGenerateSample = async () => {
   gap: var(--el-margin-small, 8px);
 }
 
+.search-group {
+  min-width: 300px;
+}
+
+@media (max-width: 1200px) {
+  .search-group {
+    min-width: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-group {
+    min-width: 200px;
+  }
+}
+
 .theme-toggle {
   margin-left: var(--el-margin-small, 8px);
+}
+
+.auto-theme-indicator {
+  background-color: var(--el-color-primary-light-9) !important;
+  border-color: var(--el-color-primary-light-7) !important;
+  color: var(--el-color-primary) !important;
+  cursor: default !important;
+  opacity: 1 !important;
+}
+
+.auto-theme-indicator:hover {
+  background-color: var(--el-color-primary-light-9) !important;
+  border-color: var(--el-color-primary-light-7) !important;
 }
 
 .content {
@@ -371,8 +507,6 @@ const handleGenerateSample = async () => {
   max-width: 100%;
   margin: 0 auto;
 }
-
-
 
 .el-divider--vertical {
   height: 2em;
@@ -419,8 +553,6 @@ const handleGenerateSample = async () => {
   .content {
     padding: var(--el-padding-small, 10px);
   }
-
-
 }
 
 @media (max-width: 480px) {

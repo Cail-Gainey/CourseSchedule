@@ -7,7 +7,9 @@ import MainLayout from './components/MainLayout.vue'
 </script>
 
 <style>
-html, body, #app {
+html,
+body,
+#app {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -183,7 +185,11 @@ html, body, #app {
 }
 
 .el-select-dropdown .el-scrollbar__wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--el-color-primary-light-5), var(--el-color-primary-light-3));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-5),
+    var(--el-color-primary-light-3)
+  );
   border-radius: var(--el-border-radius-round);
   transition: all var(--el-transition-duration) var(--el-transition-function-ease-in-out-bezier);
 }
@@ -208,7 +214,11 @@ html, body, #app {
 }
 
 .el-dropdown-menu .el-scrollbar__wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--el-color-primary-light-5), var(--el-color-primary-light-3));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-5),
+    var(--el-color-primary-light-3)
+  );
   border-radius: var(--el-border-radius-round);
   transition: all var(--el-transition-duration) var(--el-transition-function-ease-in-out-bezier);
 }
@@ -234,7 +244,11 @@ html, body, #app {
 }
 
 .el-table .el-scrollbar__wrap::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--el-color-primary-light-5), var(--el-color-primary-light-3));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-5),
+    var(--el-color-primary-light-3)
+  );
   border-radius: var(--el-border-radius-round);
   transition: all var(--el-transition-duration) var(--el-transition-function-ease-in-out-bezier);
 }

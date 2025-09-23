@@ -1,6 +1,6 @@
 {
   "name": "courseschedule",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An Electron application with Vue",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -17,9 +17,7 @@
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
     "build:mobile": "npm run build && npx cap sync",
-    "build:android": "npm run build:mobile && npx cap build android --keystorepath=\"E:\\Projects\\Vue\\CourseSchedule\\android\\app\\debug.keystore\" --keystorepass=android --keystorealias=androiddebugkey --keystorealiaspass=android",
-    "build:android-apk": "npm run build:mobile && cd android; .\\gradlew assembleDebug",
-    "build:ios": "npm run build:mobile && npx cap build ios",
+    "build:android": "npm run build:mobile && cd android && .\\gradlew assembleRelease",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios"
   },
@@ -28,6 +26,8 @@
     "@capacitor/cli": "^7.4.3",
     "@capacitor/core": "^7.4.3",
     "@capacitor/ios": "^7.4.3",
+    "@capacitor/local-notifications": "^7.0.3",
+    "@capacitor/toast": "^7.0.2",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@vicons/ionicons5": "^0.13.0",

@@ -12,7 +12,7 @@
         class="side-nav-button prev-button"
       />
     </div>
-    
+
     <!-- 右侧下一周按钮 -->
     <div class="nav-button-right">
       <el-button
@@ -129,11 +129,11 @@ const goToNextWeek = () => {
   .nav-button-left {
     left: 10px;
   }
-  
+
   .nav-button-right {
     right: 10px;
   }
-  
+
   .side-nav-button {
     width: 45px;
     height: 45px;
@@ -144,11 +144,11 @@ const goToNextWeek = () => {
   .nav-button-left {
     left: 5px;
   }
-  
+
   .nav-button-right {
     right: 5px;
   }
-  
+
   .side-nav-button {
     width: 40px;
     height: 40px;

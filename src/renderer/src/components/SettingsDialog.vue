@@ -8,21 +8,20 @@
     destroy-on-close
     class="settings-dialog"
   >
-    <el-form
-      :model="formData"
-      label-width="120px"
-      label-position="right"
-      class="settings-form"
-    >
+    <el-form :model="formData" label-width="120px" label-position="right" class="settings-form">
       <!-- 基础设置 -->
       <div class="setting-section">
         <div class="section-title">
           <el-icon><Setting /></el-icon>
           <span>基础设置</span>
         </div>
-        
+
         <el-form-item label="界面主题">
           <el-radio-group v-model="formData.theme" @change="handleThemeChange" size="default">
+            <el-radio-button label="auto">
+              <el-icon><Setting /></el-icon>
+              <span>自动</span>
+            </el-radio-button>
             <el-radio-button label="light">
               <el-icon><Sunny /></el-icon>
               <span>浅色主题</span>
@@ -33,13 +32,67 @@
             </el-radio-button>
           </el-radio-group>
         </el-form-item>
+      </div>
 
-        <el-form-item label="自动保存">
+      <!-- 通知设置 -->
+      <div class="setting-section">
+        <div class="section-title">
+          <el-icon><Bell /></el-icon>
+          <span>通知设置</span>
+        </div>
+
+        <el-form-item label="启用通知">
           <div class="setting-item">
-            <el-switch v-model="formData.autoSave" size="default" />
-            <div class="setting-help">
-              开启后，数据修改将自动保存到本地存储
+            <el-switch
+              v-model="formData.notificationEnabled"
+              size="default"
+              active-text="开启"
+              inactive-text="关闭"
+            />
+            <div class="setting-help">开启后将在课程开始前发送桌面通知提醒</div>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="提前通知时间" v-if="formData.notificationEnabled">
+          <div class="setting-item">
+            <el-select
+              v-model="formData.notificationMinutes"
+              placeholder="选择提前通知时间"
+              style="width: 200px"
+              size="default"
+            >
+              <el-option label="5分钟" :value="5" />
+              <el-option label="10分钟" :value="10" />
+              <el-option label="15分钟" :value="15" />
+              <el-option label="20分钟" :value="20" />
+              <el-option label="30分钟" :value="30" />
+            </el-select>
+            <div class="setting-help">设置在课程开始前多长时间发送通知</div>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="通知权限状态" v-if="formData.notificationEnabled">
+          <div class="setting-item">
+            <div class="notification-permission-status">
+              <el-tag 
+                :type="getPermissionTagType()" 
+                :icon="getPermissionIcon()"
+                size="large"
+              >
+                {{ getPermissionStatusText() }}
+              </el-tag>
+              <el-button 
+                v-if="needsPermissionRequest()"
+                @click="requestNotificationPermission"
+                type="primary"
+                size="small"
+                :loading="isRequestingPermission"
+                style="margin-left: 10px;"
+              >
+                {{ isRequestingPermission ? '请求中...' : '请求权限' }}
+              </el-button>
             </div>
+            <div class="setting-help">浏览器通知权限状态，需要授权后才能发送桌面通知</div>
           </div>
         </el-form-item>
       </div>
@@ -50,7 +103,7 @@
           <el-icon><Calendar /></el-icon>
           <span>学期设置</span>
         </div>
-        
+
         <el-form-item label="第一周开始">
           <div class="setting-item">
             <el-date-picker
@@ -62,14 +115,10 @@
               style="width: 200px"
               size="default"
             />
-            <div class="setting-help">
-              设置学期第一周的开始日期，用于自动计算当前周数和课程日期
-            </div>
+            <div class="setting-help">设置学期第一周的开始日期，用于自动计算当前周数和课程日期</div>
           </div>
         </el-form-item>
       </div>
-
-
 
       <!-- 数据管理 -->
       <div class="setting-section">
@@ -77,11 +126,10 @@
           <el-icon><FolderOpened /></el-icon>
           <span>数据管理</span>
         </div>
-        
+
         <el-form-item label="数据操作">
           <div class="setting-item">
             <el-space wrap size="default">
-
               <el-popconfirm
                 title="确定要清空所有数据吗？此操作无法恢复。"
                 @confirm="handleClearData"
@@ -94,9 +142,7 @@
                 </template>
               </el-popconfirm>
             </el-space>
-            <div class="setting-help">
-              清空当前所有课程数据
-            </div>
+            <div class="setting-help">清空当前所有课程数据</div>
           </div>
         </el-form-item>
       </div>
@@ -115,19 +161,22 @@
 import { ref, reactive, watch } from 'vue'
 import { useScheduleStore } from '../stores/schedule'
 import { ElMessage } from 'element-plus'
-import { Setting, Sunny, Moon, Calendar, FolderOpened, Delete } from '@element-plus/icons-vue'
+import { Setting, Sunny, Moon, Calendar, FolderOpened, Delete, Bell, Check, Close, Warning } from '@element-plus/icons-vue'
+import { notificationService } from '../services/notification.js'
 
 const scheduleStore = useScheduleStore()
 
 const showDialog = ref(false)
-
-const clearing = ref(false)
-
-const formData = reactive({
-  theme: 'light',
-  autoSave: true,
-  firstWeekStart: ''
+const formData = ref({
+  theme: 'auto',
+  firstWeekStart: '',
+  notificationEnabled: false,
+  notificationMinutes: 10
 })
+
+// 通知权限相关状态
+const isRequestingPermission = ref(false)
+const notificationPermission = ref('default')
 
 watch(
   () => scheduleStore.currentTheme,
@@ -140,23 +189,27 @@ watch(
 const openDialog = async () => {
   // 先记录当前主题状态
   const currentThemeBeforeLoad = scheduleStore.currentTheme
-  
+
   // 加载设置
   try {
     await scheduleStore.loadSettings()
     const settings = scheduleStore.settings
-    
+
     // 保持当前主题状态不变，避免被loadSettings重置
     scheduleStore.currentTheme = currentThemeBeforeLoad
     formData.theme = currentThemeBeforeLoad
-    formData.autoSave = settings.autoSave
     formData.firstWeekStart = settings.firstWeekStart || ''
+    formData.notificationEnabled = settings.notificationEnabled || false
+    formData.notificationMinutes = settings.notificationMinutes || 10
   } catch (error) {
     console.warn('加载设置失败:', error)
     // 即使加载失败也要保持当前主题
     formData.theme = currentThemeBeforeLoad
   }
-  
+
+  // 更新通知权限状态
+  updateNotificationPermissionStatus()
+
   showDialog.value = true
 }
 
@@ -168,15 +221,92 @@ const handleSave = async () => {
   try {
     await scheduleStore.saveSettings({
       theme: formData.theme,
-      autoSave: formData.autoSave,
-      firstWeekStart: formData.firstWeekStart
+      autoSave: true, // 始终启用自动保存
+      firstWeekStart: formData.firstWeekStart,
+      notificationEnabled: formData.notificationEnabled,
+      notificationMinutes: formData.notificationMinutes
     })
-    
+
     ElMessage.success('设置保存成功')
     showDialog.value = false
   } catch (error) {
     ElMessage.error(`保存设置失败: ${error.message}`)
   }
+}
+
+// 更新通知权限状态
+const updateNotificationPermissionStatus = () => {
+  notificationPermission.value = notificationService.getPermissionStatus()
+}
+
+// 请求通知权限
+const requestNotificationPermission = async () => {
+  if (isRequestingPermission.value) return
+  
+  isRequestingPermission.value = true
+  try {
+    const permission = await notificationService.requestPermission()
+    notificationPermission.value = permission
+    
+    if (permission === 'granted') {
+      ElMessage.success('通知权限已授予')
+    } else if (permission === 'denied') {
+      ElMessage.warning('通知权限被拒绝，请在浏览器设置中手动开启')
+    } else {
+      ElMessage.info('通知权限请求已取消')
+    }
+  } catch (error) {
+    console.error('请求通知权限失败:', error)
+    ElMessage.error('请求通知权限失败')
+  } finally {
+    isRequestingPermission.value = false
+  }
+}
+
+// 获取权限状态标签类型
+const getPermissionTagType = () => {
+  switch (notificationPermission.value) {
+    case 'granted':
+      return 'success'
+    case 'denied':
+      return 'danger'
+    default:
+      return 'warning'
+  }
+}
+
+// 获取权限状态图标
+const getPermissionIcon = () => {
+  switch (notificationPermission.value) {
+    case 'granted':
+      return Check
+    case 'denied':
+      return Close
+    default:
+      return Warning
+  }
+}
+
+// 获取权限状态文本
+const getPermissionStatusText = () => {
+  if (!notificationService.isNotificationSupported()) {
+    return '浏览器不支持通知'
+  }
+  
+  switch (notificationPermission.value) {
+    case 'granted':
+      return '已授权'
+    case 'denied':
+      return '已拒绝'
+    default:
+      return '未授权'
+  }
+}
+
+// 是否需要显示权限请求按钮
+const needsPermissionRequest = () => {
+  return notificationService.isNotificationSupported() && 
+         notificationPermission.value !== 'granted'
 }
 
 const handleCancel = () => {
@@ -325,17 +455,17 @@ defineExpose({
     margin-bottom: 20px;
     border-radius: 12px;
   }
-  
+
   .section-title {
     font-size: 16px;
     margin-bottom: 16px;
   }
-  
+
   .theme-options {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .theme-option {
     padding: 12px;
     justify-content: center;
@@ -422,7 +552,7 @@ defineExpose({
     padding: 16px;
     margin-bottom: 16px;
   }
-  
+
   .section-title {
     font-size: 14px;
     margin-bottom: 12px;
@@ -492,7 +622,7 @@ defineExpose({
     padding: 12px;
     margin-bottom: 12px;
   }
-  
+
   .section-title {
     font-size: 13px;
     margin-bottom: 10px;
@@ -530,7 +660,11 @@ defineExpose({
 }
 
 :deep(.el-dialog__body)::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--el-color-primary-light-5), var(--el-color-primary-light-3));
+  background: linear-gradient(
+    135deg,
+    var(--el-color-primary-light-5),
+    var(--el-color-primary-light-3)
+  );
   border-radius: var(--el-border-radius-round);
   border: 1px solid var(--el-color-primary-light-8);
   transition: all var(--el-transition-duration) var(--el-transition-function-ease-in-out-bezier);
@@ -544,28 +678,28 @@ defineExpose({
 
 .time-settings-header,
 .time-setting-row {
-    grid-template-columns: 50px 80px 80px;
-    gap: var(--el-margin-extra-small, 6px);
-  }
-  
-  .time-setting-row :deep(.el-time-picker) {
-    width: 75px !important;
-  }
-  
-  .theme-option {
-    padding: var(--el-padding-small, 8px);
-    font-size: var(--el-font-size-small);
-  }
+  grid-template-columns: 50px 80px 80px;
+  gap: var(--el-margin-extra-small, 6px);
+}
 
-  .time-settings-header,
-  .time-setting-row {
-    grid-template-columns: 50px 80px 80px;
-    gap: var(--el-margin-extra-small, 6px);
-  }
-  
-  .time-setting-row :deep(.el-time-picker) {
-    width: 75px !important;
-  }
+.time-setting-row :deep(.el-time-picker) {
+  width: 75px !important;
+}
+
+.theme-option {
+  padding: var(--el-padding-small, 8px);
+  font-size: var(--el-font-size-small);
+}
+
+.time-settings-header,
+.time-setting-row {
+  grid-template-columns: 50px 80px 80px;
+  gap: var(--el-margin-extra-small, 6px);
+}
+
+.time-setting-row :deep(.el-time-picker) {
+  width: 75px !important;
+}
 
 .time-settings {
   width: 100%;
@@ -594,6 +728,4 @@ defineExpose({
   font-size: var(--el-font-size-small);
   color: var(--el-text-color-regular);
 }
-
-
 </style>
